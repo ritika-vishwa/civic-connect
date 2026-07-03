@@ -8,7 +8,7 @@ export const TopNav: React.FC = () => {
     <header className="glass-panel fixed top-0 w-full z-50 border-b border-outline-variant/30 transition-all duration-300">
       <div className="flex justify-between items-center px-margin-mobile md:px-margin-desktop h-20 max-w-container-max mx-auto">
         {/* Brand */}
-        <Link to="/dashboard" className="flex items-center gap-4">
+        <Link to="/" className="flex items-center gap-4">
           <span className="font-display-lg text-headline-lg-mobile md:text-title-md tracking-widest uppercase text-white font-black drop-shadow-[0_0_8px_rgba(255,255,255,0.3)]">
             CivicConnect
           </span>

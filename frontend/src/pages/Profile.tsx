@@ -1,12 +1,20 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useIssues } from '../context/IssueContext';
 import { GlassCard } from '../components/ui/GlassCard';
 import { IssueCard } from '../components/ui/IssueCard';
 
 export const Profile: React.FC = () => {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const { issues } = useIssues();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   if (!user) return null;
 
@@ -32,6 +40,13 @@ export const Profile: React.FC = () => {
             Manage your network node permissions and inspect engagement history.
           </p>
         </div>
+        <button
+          onClick={handleLogout}
+          className="flex items-center gap-2 bg-error/10 hover:bg-error/20 text-error border border-error/30 px-4 py-2 rounded-xl font-label-caps text-xs tracking-widest uppercase transition-all cursor-pointer shadow-[0_0_15px_rgba(255,180,171,0.1)]"
+        >
+          <span className="material-symbols-outlined text-lg">logout</span>
+          Sign Out
+        </button>
       </div>
 
       {/* User Details Panel */}

@@ -3,7 +3,9 @@ import {
   signInWithEmailAndPassword, 
   createUserWithEmailAndPassword, 
   onAuthStateChanged, 
-  signOut as firebaseSignOut 
+  signOut as firebaseSignOut,
+  GoogleAuthProvider,
+  signInWithPopup
 } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { auth, db } from '../firebase';
@@ -23,6 +25,8 @@ interface AuthContextProps {
   user: User | null;
   loading: boolean;
   login: (email: string, password: string, role: UserRole) => Promise<void>;
+  signup: (email: string, password: string, role: UserRole) => Promise<void>;
+  loginWithGoogle: (role: UserRole) => Promise<void>;
   logout: () => void;
   switchRole: (role: UserRole) => void;
 }
@@ -114,7 +118,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       
     } catch (error: any) {
-      // 3. If it fails (user doesn't exist), sign them up automatically
+      // 3. If it fails, check if we want to auto-create them. Actually, we now have an explicit signup function.
+      // But we keep this for backwards compatibility with Quick Demo Login or other implicit flows.
       if (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential' || error.code === 'auth/invalid-login-credentials') {
         try {
           const userCredential = await createUserWithEmailAndPassword(auth, email, password);
@@ -143,6 +148,60 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const signup = async (email: string, password: string, role: UserRole) => {
+    try {
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const newUser = userCredential.user;
+      
+      const profile = FALLBACK_PROFILES[role];
+      const userDoc: User = {
+        uid: newUser.uid,
+        email: email,
+        role: role,
+        name: profile.name || 'User',
+        avatar: profile.avatar || '',
+        ...(profile.department && { department: profile.department })
+      };
+      
+      await setDoc(doc(db, 'users', newUser.uid), userDoc);
+      setUser(userDoc);
+    } catch (error) {
+      console.error("Signup failed:", error);
+      throw error;
+    }
+  };
+
+  const loginWithGoogle = async (role: UserRole) => {
+    try {
+      const provider = new GoogleAuthProvider();
+      const userCredential = await signInWithPopup(auth, provider);
+      
+      const userDocRef = doc(db, 'users', userCredential.user.uid);
+      const userDocSnap = await getDoc(userDocRef);
+      const profile = FALLBACK_PROFILES[role];
+      
+      if (!userDocSnap.exists()) {
+        const userDoc: User = {
+          uid: userCredential.user.uid,
+          email: userCredential.user.email || '',
+          role: role,
+          name: userCredential.user.displayName || profile.name || 'User',
+          avatar: userCredential.user.photoURL || profile.avatar || '',
+          ...(profile.department && { department: profile.department })
+        };
+        await setDoc(userDocRef, userDoc);
+        setUser(userDoc);
+      } else {
+        await setDoc(userDocRef, { role: role }, { merge: true });
+        const updatedDoc = await getDoc(userDocRef);
+        setUser({ uid: userCredential.user.uid, ...updatedDoc.data() } as User);
+      }
+    } catch (error) {
+      console.error("Google login failed:", error);
+      throw error;
+    }
+  };
+
   const logout = async () => {
     try {
       await firebaseSignOut(auth);
@@ -166,7 +225,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, switchRole }}>
+    <AuthContext.Provider value={{ user, loading, login, signup, loginWithGoogle, logout, switchRole }}>
       {children}
     </AuthContext.Provider>
   );

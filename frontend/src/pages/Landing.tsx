@@ -37,18 +37,32 @@ export const Landing: React.FC = () => {
           {/* Nav links */}
           <nav className="hidden md:flex items-center gap-10 font-label-caps text-label-caps uppercase tracking-widest text-on-surface-variant">
             <button onClick={() => navigate('/about')} className="hover:text-primary-container transition-colors cursor-pointer bg-transparent border-0">About</button>
-            <button onClick={() => navigate('/login')} className="hover:text-primary-container transition-colors cursor-pointer bg-transparent border-0">Console Login</button>
-            <button onClick={handleHeroCTA} className="hover:text-primary-container transition-colors cursor-pointer bg-transparent border-0">Dashboard</button>
+            {!user && (
+              <button onClick={() => navigate('/login')} className="hover:text-primary-container transition-colors cursor-pointer bg-transparent border-0">Sign Up</button>
+            )}
+            {user && (
+              <button onClick={handleHeroCTA} className="hover:text-primary-container transition-colors cursor-pointer bg-transparent border-0">Dashboard</button>
+            )}
           </nav>
 
           {/* Action CTAs */}
           <div className="flex items-center gap-4 text-white">
-            <button 
-              onClick={() => navigate('/login')}
-              className="text-white hover:text-primary-container transition-colors p-2 rounded-full hover:bg-primary-container/10"
-            >
-              <span className="material-symbols-outlined">account_circle</span>
-            </button>
+            {!user ? (
+              <button 
+                onClick={() => navigate('/login')}
+                className="text-white hover:text-primary-container transition-colors p-2 rounded-full hover:bg-primary-container/10 flex items-center gap-2 font-label-caps text-xs uppercase tracking-widest"
+              >
+                <span>Sign In</span>
+                <span className="material-symbols-outlined">login</span>
+              </button>
+            ) : (
+              <button 
+                onClick={() => navigate('/profile')}
+                className="text-white hover:text-primary-container transition-colors p-2 rounded-full hover:bg-primary-container/10"
+              >
+                <span className="material-symbols-outlined">account_circle</span>
+              </button>
+            )}
           </div>
         </div>
       </header>
@@ -69,32 +83,37 @@ export const Landing: React.FC = () => {
           </div>
 
           <div className="relative z-10 p-8 md:p-16 max-w-4xl text-center flex flex-col items-center mt-6">
-            <div className="inline-flex items-center gap-3 bg-[#000f21]/80 border border-primary-container/50 rounded-full px-6 py-2 backdrop-blur-md mb-8 shadow-[0_0_15px_rgba(0,240,255,0.2)]">
+            <div className="inline-flex items-center gap-3 bg-[#000f21]/80 border border-primary-container/50 rounded-full px-6 py-2 backdrop-blur-md mb-8 shadow-[0_0_15px_rgba(0,240,255,0.2)] animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
               <span className="w-2 h-2 rounded-full bg-primary-container animate-pulse shadow-[0_0_10px_#00f0ff]"></span>
               <span className="font-label-caps text-label-caps text-primary-container uppercase tracking-widest font-bold">A New Era of Civic Engagement</span>
             </div>
 
-            <h1 className="font-display-lg text-4xl md:text-7xl leading-tight mb-8 font-black text-white uppercase tracking-tighter drop-shadow-[0_0_25px_rgba(255,255,255,0.3)]">
+            <h1 className="font-display-lg text-4xl md:text-7xl leading-tight mb-8 font-black text-white uppercase tracking-tighter drop-shadow-[0_0_25px_rgba(255,255,255,0.3)] animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
               Empowering <br/>
               <span className="text-primary-container drop-shadow-[0_0_20px_rgba(0,240,255,0.8)]">Communities</span> <br/>
               Through Clarity.
             </h1>
             
-            <p className="font-body-lg text-lg max-w-2xl mx-auto mb-10 text-on-surface-variant font-light leading-relaxed">
+            <p className="font-body-lg text-lg max-w-2xl mx-auto mb-10 text-on-surface-variant font-light leading-relaxed animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
               Bridge the gap between institutional reliability and cutting-edge digital craftsmanship. Join the movement for transparent, effective civic action.
             </p>
 
-            <div className="flex flex-wrap gap-6 justify-center">
+            <div className="flex flex-wrap gap-6 justify-center animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
               <button 
                 onClick={handleHeroCTA}
-                className="bg-gradient-to-r from-primary-container to-[#0088ff] text-black font-label-caps text-xs tracking-widest uppercase px-8 py-4.5 rounded-full font-bold shadow-[0_0_30px_rgba(0,240,255,0.4)] hover:shadow-[0_0_40px_rgba(0,240,255,0.7)] hover:scale-105 transition-all duration-300 cursor-pointer"
+                className="group relative flex items-center justify-center gap-3 bg-gradient-to-r from-primary-container to-[#0088ff] text-black font-label-caps text-sm tracking-widest uppercase px-10 py-5 rounded-full font-bold shadow-[0_0_30px_rgba(0,240,255,0.4)] hover:shadow-[0_0_50px_rgba(0,240,255,0.8)] hover:scale-105 transition-all duration-300 cursor-pointer overflow-hidden"
               >
-                Join the Movement
+                <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out"></div>
+                <span className="relative z-10 flex items-center gap-2">
+                  Get Started
+                  <span className="material-symbols-outlined text-[18px] group-hover:translate-x-1 transition-transform">rocket_launch</span>
+                </span>
               </button>
               <button 
                 onClick={() => navigate('/about')}
-                className="bg-transparent backdrop-blur-md text-white font-label-caps text-xs tracking-widest uppercase px-8 py-4.5 rounded-full hover:bg-primary-container/10 transition-all border-2 border-primary-container/50 hover:border-primary-container hover:shadow-[0_0_20px_rgba(0,240,255,0.3)] cursor-pointer"
+                className="group flex items-center justify-center gap-3 bg-transparent backdrop-blur-md text-white font-label-caps text-sm tracking-widest uppercase px-10 py-5 rounded-full hover:bg-primary-container/10 transition-all duration-300 border-2 border-primary-container/50 hover:border-primary-container hover:shadow-[0_0_30px_rgba(0,240,255,0.3)] cursor-pointer"
               >
+                <span className="material-symbols-outlined text-[18px] group-hover:rotate-12 transition-transform">explore</span>
                 Explore Specs
               </button>
             </div>
@@ -103,7 +122,7 @@ export const Landing: React.FC = () => {
 
         {/* Bento Grid Principles */}
         <section className="px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto mb-28 relative z-10 w-full">
-          <div className="text-center mb-16 relative">
+          <div className="text-center mb-16 relative animate-fade-in-up" style={{ animationDelay: '0.5s' }}>
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-primary-container/10 rounded-full blur-[80px] pointer-events-none"></div>
             <h2 className="font-display-lg text-3xl md:text-5xl mb-4 text-white font-black uppercase tracking-tight relative z-10">Core Principles</h2>
             <p className="font-body-lg text-base text-on-surface-variant max-w-2xl mx-auto relative z-10">Built on a foundation of trust, designed for immediate action.</p>
@@ -111,7 +130,7 @@ export const Landing: React.FC = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-12 gap-6 auto-rows-[300px]">
             {/* Absolute Transparency */}
-            <div className="md:col-span-8 bg-surface-container-lowest/80 backdrop-blur-xl hover:-translate-y-2 rounded-2xl p-8 flex flex-col justify-between group overflow-hidden relative border border-primary-container/20 hover:border-primary-container/60 hover:shadow-[0_0_40px_rgba(0,240,255,0.15)] transition-all duration-500">
+            <div className="md:col-span-8 bg-surface-container-lowest/80 backdrop-blur-xl hover:-translate-y-2 rounded-2xl p-8 flex flex-col justify-between group overflow-hidden relative border border-primary-container/20 hover:border-primary-container/60 hover:shadow-[0_0_40px_rgba(0,240,255,0.15)] transition-all duration-500 animate-fade-in-up" style={{ animationDelay: '0.6s' }}>
               <div className="absolute inset-0 bg-gradient-to-br from-primary-container/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
               <div className="relative z-10 flex justify-between items-start">
                 <div className="bg-[#00060d] p-3.5 rounded-xl border border-primary-container/30 shadow-[0_0_15px_rgba(0,240,255,0.2)]">
@@ -128,7 +147,7 @@ export const Landing: React.FC = () => {
             </div>
 
             {/* Community Driven */}
-            <div className="md:col-span-4 bg-surface-container-lowest/80 backdrop-blur-xl hover:-translate-y-2 rounded-2xl p-8 flex flex-col justify-between group relative overflow-hidden border border-outline-variant/30 hover:border-white/40 hover:shadow-[0_0_30px_rgba(255,255,255,0.1)] transition-all duration-500">
+            <div className="md:col-span-4 bg-surface-container-lowest/80 backdrop-blur-xl hover:-translate-y-2 rounded-2xl p-8 flex flex-col justify-between group relative overflow-hidden border border-outline-variant/30 hover:border-white/40 hover:shadow-[0_0_30px_rgba(255,255,255,0.1)] transition-all duration-500 animate-fade-in-up" style={{ animationDelay: '0.7s' }}>
               <div className="absolute right-0 bottom-0 w-48 h-48 bg-white/5 rounded-tl-full blur-3xl"></div>
               <div className="bg-[#00060d] p-3.5 rounded-xl border border-outline-variant/50 w-fit relative z-10">
                 <span className="material-symbols-outlined text-white text-3xl">groups</span>
@@ -142,7 +161,7 @@ export const Landing: React.FC = () => {
             </div>
 
             {/* Measurable Impact */}
-            <div className="md:col-span-5 bg-surface-container-lowest/80 backdrop-blur-xl hover:-translate-y-2 rounded-2xl p-8 flex flex-col justify-between group relative overflow-hidden border border-primary-container/20 hover:border-primary-container/60 hover:shadow-[0_0_40px_rgba(0,240,255,0.15)] transition-all duration-500">
+            <div className="md:col-span-5 bg-surface-container-lowest/80 backdrop-blur-xl hover:-translate-y-2 rounded-2xl p-8 flex flex-col justify-between group relative overflow-hidden border border-primary-container/20 hover:border-primary-container/60 hover:shadow-[0_0_40px_rgba(0,240,255,0.15)] transition-all duration-500 animate-fade-in-up" style={{ animationDelay: '0.8s' }}>
               <div className="absolute inset-0 bg-[#00060d]/80 z-0"></div>
               <img 
                 alt="Abstract Tech" 
@@ -161,7 +180,7 @@ export const Landing: React.FC = () => {
             </div>
 
             {/* Institutional Security */}
-            <div className="md:col-span-7 bg-surface-container-lowest/80 backdrop-blur-xl hover:-translate-y-2 rounded-2xl p-8 flex items-center justify-between group relative overflow-hidden border border-outline-variant/30 hover:border-white/40 hover:shadow-[0_0_30px_rgba(255,255,255,0.1)] transition-all duration-500">
+            <div className="md:col-span-7 bg-surface-container-lowest/80 backdrop-blur-xl hover:-translate-y-2 rounded-2xl p-8 flex items-center justify-between group relative overflow-hidden border border-outline-variant/30 hover:border-white/40 hover:shadow-[0_0_30px_rgba(255,255,255,0.1)] transition-all duration-500 animate-fade-in-up" style={{ animationDelay: '0.9s' }}>
               <div className="absolute left-0 top-0 w-48 h-48 bg-white/5 rounded-br-full blur-3xl"></div>
               <div className="relative z-10">
                 <div className="bg-[#00060d] p-3.5 rounded-xl border border-outline-variant/50 w-fit mb-5">
@@ -183,7 +202,7 @@ export const Landing: React.FC = () => {
         </section>
 
         {/* Real-time pulse section */}
-        <section className="px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto pb-10">
+        <section className="px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto pb-10 animate-fade-in-up" style={{ animationDelay: '1s' }}>
           <div className="bg-surface-container-lowest/90 backdrop-blur-xl rounded-3xl p-8 md:p-14 relative overflow-hidden border border-primary-container/30 hover:shadow-[0_0_60px_rgba(0,240,255,0.1)] transition-all duration-700">
             {/* Grid Backdrop */}
             <div className="absolute inset-0 bg-[linear-gradient(rgba(0,240,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(0,240,255,0.03)_1px,transparent_1px)] bg-[size:50px_50px] opacity-35" />
