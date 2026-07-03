@@ -5,8 +5,7 @@ import { useIssues } from '../context/IssueContext';
 import { GlassCard } from '../components/ui/GlassCard';
 import { IssueCard } from '../components/ui/IssueCard';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
-import { ref, uploadString, getDownloadURL } from 'firebase/storage';
-import { db, storage } from '../firebase';
+import { db } from '../firebase';
 
 export const Profile: React.FC = () => {
   const { user, logout, deleteAccount, updateUserAvatar } = useAuth();
@@ -51,19 +50,26 @@ export const Profile: React.FC = () => {
         return;
       }
       setIsUploading(true);
+      setIsUploading(true);
+      const formData = new FormData();
+      formData.append('image', file);
+
       try {
-        const reader = new FileReader();
-        reader.onload = async () => {
-          const imageRef = ref(storage, `avatars/${user.uid}_${Date.now()}`);
-          await uploadString(imageRef, reader.result as string, 'data_url');
-          const url = await getDownloadURL(imageRef);
-          await updateUserAvatar(url);
-          setIsUploading(false);
-        };
-        reader.readAsDataURL(file);
+        const response = await fetch('http://localhost:3001/api/upload', {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (!response.ok) {
+          throw new Error('Upload failed');
+        }
+
+        const data = await response.json();
+        await updateUserAvatar(data.url);
       } catch (error) {
         console.error("Avatar upload failed:", error);
         alert('Failed to upload avatar. Please try again.');
+      } finally {
         setIsUploading(false);
       }
     }

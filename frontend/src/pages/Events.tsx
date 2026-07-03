@@ -4,8 +4,7 @@ import { CustomDatePicker, CustomTimePicker } from '../components/ui/DateTimePic
 import { CustomSelect } from '../components/ui/CustomSelect';
 import { useNotification } from '../context/NotificationContext';
 import { collection, onSnapshot, query, doc, updateDoc, arrayUnion, arrayRemove, addDoc, orderBy, deleteDoc } from 'firebase/firestore';
-import { ref, uploadString, getDownloadURL } from 'firebase/storage';
-import { db, storage } from '../firebase';
+import { db } from '../firebase';
 import { useAuth } from '../context/AuthContext';
 
 interface EventItem {
@@ -35,6 +34,7 @@ export const Events: React.FC = () => {
   const [newTime, setNewTime] = useState('');
   const [newLocation, setNewLocation] = useState('');
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
   const [isGeneratingDesc, setIsGeneratingDesc] = useState(false);
 
   const { showToast } = useNotification();
@@ -110,7 +110,10 @@ export const Events: React.FC = () => {
         return;
       }
       const reader = new FileReader();
-      reader.onload = () => setImagePreview(reader.result as string);
+      reader.onload = () => {
+        setImagePreview(reader.result as string);
+        setSelectedImageFile(file);
+      };
       reader.readAsDataURL(file);
     }
   };
@@ -154,14 +157,23 @@ export const Events: React.FC = () => {
 
     try {
       let finalImageUrl = 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&q=80&w=800'; // Default event image
-      if (imagePreview) {
-        const imageRef = ref(storage, `events/${Date.now()}`);
-        const uploadPromise = uploadString(imageRef, imagePreview, 'data_url').then(() => getDownloadURL(imageRef));
-        const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Storage timeout")), 4000));
+      if (selectedImageFile) {
+        const formData = new FormData();
+        formData.append('image', selectedImageFile);
+        
         try {
-          finalImageUrl = await Promise.race([uploadPromise, timeoutPromise]) as string;
-        } catch (storageErr) {
-          console.warn("Storage upload failed, falling back to dummy image.", storageErr);
+          const response = await fetch('http://localhost:3001/api/upload', {
+            method: 'POST',
+            body: formData
+          });
+          if (response.ok) {
+            const data = await response.json();
+            finalImageUrl = data.url;
+          } else {
+            console.warn("Backend upload failed, falling back to dummy image.");
+          }
+        } catch (uploadErr) {
+          console.warn("Backend upload failed, falling back to dummy image.", uploadErr);
         }
       }
 
