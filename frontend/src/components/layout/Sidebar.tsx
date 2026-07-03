@@ -52,7 +52,7 @@ export const Sidebar: React.FC = () => {
             }`
           }
         >
-          <span className="material-symbols-outlined drop-shadow-[0_0_8px_#00f0ff]" style={{ fontVariationSettings: "'FILL' 1" }}>analytics</span>
+          <span className="material-symbols-outlined">analytics</span>
           Analytics
         </NavLink>
 

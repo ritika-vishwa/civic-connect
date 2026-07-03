@@ -125,6 +125,17 @@
   box-shadow: 0 0 0 1px #00f0ff;
 }
 
+/* Fix for browser autofill overriding the glass effect */
+.input-glass:-webkit-autofill,
+.input-glass:-webkit-autofill:hover, 
+.input-glass:-webkit-autofill:focus, 
+.input-glass:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 30px #031427 inset !important;
+  -webkit-text-fill-color: white !important;
+  transition: background-color 5000s ease-in-out 0s;
+  caret-color: white;
+}
+
 /* Custom Scrollbars */
 ::-webkit-scrollbar {
   width: 6px;
