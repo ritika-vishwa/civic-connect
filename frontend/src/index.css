@@ -203,3 +203,22 @@
   background: rgba(11, 28, 48, 0.9) !important;
   border: 1px solid rgba(0, 240, 255, 0.3) !important;
 }
+
+/* --- LIGHT MODE IMPLEMENTATION --- */
+html.light {
+  filter: invert(1) hue-rotate(180deg);
+  background-color: #031427;
+  min-height: 100vh;
+}
+
+/* Double-invert images and videos so they don't look like x-rays */
+html.light img:not(.leaflet-tile),
+html.light video {
+  filter: invert(1) hue-rotate(180deg) !important;
+}
+
+/* The map tiles stack filters, so we remove the dark-mode inversion in light mode */
+html.light .leaflet-tile {
+  filter: none !important;
+}
+

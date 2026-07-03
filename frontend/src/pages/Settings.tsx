@@ -8,7 +8,9 @@ export const Settings: React.FC = () => {
   const { showToast } = useNotification();
 
   const [displayName, setDisplayName] = useState(user?.name || '');
-  const [themeMode, setThemeMode] = useState<'dark' | 'light'>('dark');
+  const [themeMode, setThemeMode] = useState<'dark' | 'light'>(
+    document.documentElement.classList.contains('light') || localStorage.getItem('theme') === 'light' ? 'light' : 'dark'
+  );
   const [emailAlerts, setEmailAlerts] = useState(true);
   const [smsAlerts, setSmsAlerts] = useState(false);
   const [shareGPS, setShareGPS] = useState(true);
@@ -25,9 +27,11 @@ export const Settings: React.FC = () => {
     if (mode === 'light') {
       html.classList.remove('dark');
       html.classList.add('light');
+      localStorage.setItem('theme', 'light');
     } else {
       html.classList.remove('light');
       html.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
     }
     showToast(`Theme mode switched to ${mode.toUpperCase()}`, 'success');
   };

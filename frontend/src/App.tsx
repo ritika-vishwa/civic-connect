@@ -60,6 +60,11 @@ const RoleRoute: React.FC<{ children: React.ReactNode; allowedRoles: UserRole[] 
 };
 
 export const App: React.FC = () => {
+  React.useEffect(() => {
+    if (localStorage.getItem('theme') === 'light') {
+      document.documentElement.classList.add('light');
+    }
+  }, []);
   return (
     <BrowserRouter>
       <AuthProvider>
