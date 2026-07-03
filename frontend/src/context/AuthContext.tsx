@@ -36,7 +36,23 @@ interface AuthContextProps {
   deleteAccount: () => Promise<void>;
   switchRole: (role: UserRole) => void;
   resetPassword: (email: string) => Promise<void>;
+  updateUserAvatar: (url: string) => Promise<void>;
 }
+
+export const generateInitialAvatar = (name: string) => {
+  const initial = name ? name.charAt(0).toUpperCase() : 'U';
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+    <defs>
+      <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#00f0ff" />
+        <stop offset="100%" stop-color="#d946ef" />
+      </linearGradient>
+    </defs>
+    <rect width="100" height="100" fill="url(#g)"/>
+    <text x="50" y="50" font-family="sans-serif" font-weight="bold" font-size="50" fill="#ffffff" text-anchor="middle" alignment-baseline="central">${initial}</text>
+  </svg>`;
+  return `data:image/svg+xml;base64,${btoa(svg)}`;
+};
 
 const AuthContext = createContext<AuthContextProps | undefined>(undefined);
 
@@ -44,25 +60,20 @@ const AuthContext = createContext<AuthContextProps | undefined>(undefined);
 const FALLBACK_PROFILES: Record<UserRole, Partial<User>> = {
   citizen: {
     name: 'Citizen User',
-    locality: 'Downtown District',
-    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=120'
+    locality: 'Downtown District'
   },
   official: {
     name: 'Municipal Official',
     department: 'Public Works',
-    locality: 'City Hall',
-    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=120'
+    locality: 'City Hall'
   },
   moderator: {
     name: 'Community Moderator',
-    locality: 'Northside Community',
-    avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=120'
+    locality: 'Northside Community'
   },
   admin: {
-    name: 'Admin User',
-    department: 'System Administration',
-    locality: 'City Hall',
-    avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=120'
+    name: 'System Administrator',
+    department: 'IT Operations'
   }
 };
 
@@ -124,7 +135,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           email: email,
           role: role,
           name: profile.name || 'User',
-          avatar: profile.avatar || '',
+          avatar: generateInitialAvatar(profile.name || 'User'),
           ...(profile.department && { department: profile.department })
         };
         await setDoc(userDocRef, userDoc);
@@ -149,7 +160,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             email: email,
             role: role,
             name: profile.name || 'User',
-            avatar: profile.avatar || '',
+            avatar: generateInitialAvatar(profile.name || 'User'),
             ...(profile.department && { department: profile.department }),
             ...(profile.locality && { locality: profile.locality })
           };
@@ -179,7 +190,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         email: email,
         role: role,
         name: name.trim() || profile.name || 'User',
-        avatar: profile.avatar || '',
+        avatar: generateInitialAvatar(name.trim() || profile.name || 'User'),
         locality: locality?.trim() || profile.locality || 'Unknown Locality',
         ...(profile.department && { department: profile.department })
       };
@@ -205,12 +216,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const profile = FALLBACK_PROFILES[role];
       
       if (!userDocSnap.exists()) {
+        const finalName = userCredential.user.displayName || profile.name || 'User';
         const userDoc: User = {
           uid: userCredential.user.uid,
           email: userCredential.user.email || '',
           role: role,
-          name: userCredential.user.displayName || profile.name || 'User',
-          avatar: userCredential.user.photoURL || profile.avatar || '',
+          name: finalName,
+          avatar: userCredential.user.photoURL || generateInitialAvatar(finalName),
           ...(profile.department && { department: profile.department }),
           ...(profile.locality && { locality: profile.locality })
         };
@@ -238,15 +250,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const deleteAccount = async () => {
     if (auth.currentUser && user) {
       try {
-        // Delete user doc from firestore
         await deleteDoc(doc(db, 'users', user.uid));
-        // Delete user from auth
         await deleteUser(auth.currentUser);
         setUser(null);
       } catch (error) {
         console.error("Delete account failed:", error);
         throw error;
       }
+    }
+  };
+
+  const updateUserAvatar = async (url: string) => {
+    if (user) {
+      const userRef = doc(db, 'users', user.uid);
+      await setDoc(userRef, { avatar: url }, { merge: true });
+      setUser({ ...user, avatar: url });
     }
   };
 
@@ -274,8 +292,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, signup, loginWithGoogle, logout, deleteAccount, switchRole, resetPassword }}>
-      {children}
+    <AuthContext.Provider value={{ 
+      user, 
+      loading, 
+      login, 
+      signup, 
+      loginWithGoogle, 
+      logout, 
+      deleteAccount, 
+      switchRole, 
+      resetPassword,
+      updateUserAvatar 
+    }}>
+      {!loading && children}
     </AuthContext.Provider>
   );
 };

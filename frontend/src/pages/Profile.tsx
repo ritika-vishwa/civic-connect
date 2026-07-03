@@ -5,14 +5,16 @@ import { useIssues } from '../context/IssueContext';
 import { GlassCard } from '../components/ui/GlassCard';
 import { IssueCard } from '../components/ui/IssueCard';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
-import { db } from '../firebase';
+import { ref, uploadString, getDownloadURL } from 'firebase/storage';
+import { db, storage } from '../firebase';
 
 export const Profile: React.FC = () => {
-  const { user, logout, deleteAccount } = useAuth();
+  const { user, logout, deleteAccount, updateUserAvatar } = useAuth();
   const { issues } = useIssues();
   const navigate = useNavigate();
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [myEvents, setMyEvents] = useState<any[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -38,6 +40,32 @@ export const Profile: React.FC = () => {
     } catch (error) {
       setShowDeleteModal(false);
       alert("Failed to delete account. Please try again.");
+    }
+  };
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && user) {
+      if (file.size > 2 * 1024 * 1024) {
+        alert('Image must be less than 2MB');
+        return;
+      }
+      setIsUploading(true);
+      try {
+        const reader = new FileReader();
+        reader.onload = async () => {
+          const imageRef = ref(storage, `avatars/${user.uid}_${Date.now()}`);
+          await uploadString(imageRef, reader.result as string, 'data_url');
+          const url = await getDownloadURL(imageRef);
+          await updateUserAvatar(url);
+          setIsUploading(false);
+        };
+        reader.readAsDataURL(file);
+      } catch (error) {
+        console.error("Avatar upload failed:", error);
+        alert('Failed to upload avatar. Please try again.');
+        setIsUploading(false);
+      }
     }
   };
 
@@ -92,8 +120,24 @@ export const Profile: React.FC = () => {
         {/* User Card */}
         <div className="col-span-1 lg:col-span-4 animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
           <GlassCard noHover className="flex flex-col items-center text-center p-8 border border-white/10">
-            <div className="w-24 h-24 rounded-2xl overflow-hidden border-2 border-primary-container shadow-[0_0_20px_rgba(0,240,255,0.3)] mb-4 bg-surface-container-lowest">
-              <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
+            
+            {/* Avatar Upload Container */}
+            <div className="relative group w-24 h-24 mb-4">
+              <div className="w-full h-full rounded-2xl overflow-hidden border-2 border-primary-container shadow-[0_0_20px_rgba(0,240,255,0.3)] bg-surface-container-lowest">
+                <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
+              </div>
+              
+              <label className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 backdrop-blur-sm transition-all rounded-2xl flex flex-col items-center justify-center cursor-pointer border border-primary-container border-dashed">
+                {isUploading ? (
+                  <span className="material-symbols-outlined text-primary-container text-2xl animate-spin">progress_activity</span>
+                ) : (
+                  <>
+                    <span className="material-symbols-outlined text-primary-container text-2xl">add_a_photo</span>
+                    <span className="text-[8px] font-bold uppercase tracking-widest text-primary-container mt-1">Upload</span>
+                  </>
+                )}
+                <input type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} disabled={isUploading} />
+              </label>
             </div>
             
             <h3 className="text-lg font-bold text-white uppercase tracking-wider">{user.name}</h3>
