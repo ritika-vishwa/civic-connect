@@ -5,7 +5,7 @@ import { GlassCard } from '../components/ui/GlassCard';
 
 export const Landing: React.FC = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
 
   const handleHeroCTA = () => {
     if (user) {
@@ -37,17 +37,17 @@ export const Landing: React.FC = () => {
           {/* Nav links */}
           <nav className="hidden md:flex items-center gap-10 font-label-caps text-label-caps uppercase tracking-widest text-on-surface-variant">
             <button onClick={() => navigate('/about')} className="hover:text-primary-container transition-colors cursor-pointer bg-transparent border-0">About</button>
-            {!user && (
+            {!loading && !user && (
               <button onClick={() => navigate('/login')} className="hover:text-primary-container transition-colors cursor-pointer bg-transparent border-0">Sign Up</button>
             )}
-            {user && (
+            {!loading && user && (
               <button onClick={handleHeroCTA} className="hover:text-primary-container transition-colors cursor-pointer bg-transparent border-0">Dashboard</button>
             )}
           </nav>
 
           {/* Action CTAs */}
           <div className="flex items-center gap-4 text-white">
-            {!user ? (
+            {loading ? null : !user ? (
               <button 
                 onClick={() => navigate('/login')}
                 className="text-white hover:text-primary-container transition-colors p-2 rounded-full hover:bg-primary-container/10 flex items-center gap-2 font-label-caps text-xs uppercase tracking-widest"

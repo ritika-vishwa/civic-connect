@@ -4,7 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 
 export const TopNav: React.FC = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
 
   return (
     <header className="glass-panel fixed top-0 w-full z-50 border-b border-outline-variant/30 transition-all duration-300">
@@ -67,7 +67,7 @@ export const TopNav: React.FC = () => {
 
         {/* Actions */}
         <div className="flex items-center gap-4">
-          {user ? (
+          {loading ? null : user ? (
             <>
               <button 
                 onClick={() => navigate('/notifications')}
