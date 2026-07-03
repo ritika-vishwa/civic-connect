@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useIssues } from '../context/IssueContext';
@@ -9,6 +9,7 @@ export const Profile: React.FC = () => {
   const { user, logout, deleteAccount } = useAuth();
   const { issues } = useIssues();
   const navigate = useNavigate();
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -17,14 +18,14 @@ export const Profile: React.FC = () => {
   };
 
   const handleDeleteAccount = async () => {
-    if (window.confirm("Are you sure you want to permanently delete your account? This action cannot be undone.")) {
-      try {
-        await deleteAccount();
-        navigate('/');
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      } catch (error) {
-        alert("Failed to delete account. Please try again.");
-      }
+    try {
+      await deleteAccount();
+      setShowDeleteModal(false);
+      navigate('/');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch (error) {
+      setShowDeleteModal(false);
+      alert("Failed to delete account. Please try again.");
     }
   };
 
@@ -61,11 +62,11 @@ export const Profile: React.FC = () => {
             Log Out
           </button>
           <button
-            onClick={handleDeleteAccount}
+            onClick={() => setShowDeleteModal(true)}
             className="flex items-center gap-2 bg-error/10 hover:bg-error/20 text-error border border-error/30 px-4 py-2 rounded-xl font-label-caps text-xs tracking-widest uppercase transition-all cursor-pointer shadow-[0_0_15px_rgba(255,180,171,0.1)]"
           >
             <span className="material-symbols-outlined text-lg">person_remove</span>
-            Sign out (Delete)
+            Sign out
           </button>
         </div>
       </div>
@@ -182,6 +183,42 @@ export const Profile: React.FC = () => {
           </GlassCard>
         )}
       </div>
+
+      {/* Custom Delete Account Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#00060d]/80 backdrop-blur-sm px-4 animate-fade-in-up">
+          <div className="bg-[#031427] border border-error/30 p-8 rounded-3xl max-w-md w-full shadow-[0_0_50px_rgba(255,180,171,0.15)] flex flex-col gap-6 relative overflow-hidden">
+            {/* Background Glow */}
+            <div className="absolute top-0 right-0 w-32 h-32 bg-error/10 blur-[50px] rounded-full pointer-events-none"></div>
+
+            <div className="flex flex-col items-center text-center gap-4 relative z-10">
+              <div className="w-16 h-16 rounded-full bg-error/10 flex items-center justify-center border border-error/20 text-error">
+                <span className="material-symbols-outlined text-3xl">warning</span>
+              </div>
+              <h3 className="font-display-lg text-2xl font-black text-white uppercase tracking-tight">Delete Account?</h3>
+              <p className="text-on-surface-variant font-body-sm leading-relaxed text-sm">
+                This action is irreversible. All your civic endorsements, active reports, and personal data will be permanently scrubbed from the network.
+              </p>
+            </div>
+            
+            <div className="flex flex-col gap-3 relative z-10 mt-2">
+              <button
+                onClick={handleDeleteAccount}
+                className="w-full bg-error hover:bg-error/90 text-[#410002] font-bold py-3.5 rounded-xl uppercase tracking-widest text-xs transition-all flex items-center justify-center gap-2"
+              >
+                <span className="material-symbols-outlined text-[18px]">delete_forever</span>
+                Confirm Deletion
+              </button>
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                className="w-full bg-white/5 hover:bg-white/10 text-white font-bold py-3.5 rounded-xl uppercase tracking-widest text-xs transition-all border border-white/10"
+              >
+                Cancel Action
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );

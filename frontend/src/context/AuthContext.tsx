@@ -120,9 +120,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       
     } catch (error: any) {
-      // 3. If it fails, check if we want to auto-create them. Actually, we now have an explicit signup function.
-      // But we keep this for backwards compatibility with Quick Demo Login or other implicit flows.
-      if (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential' || error.code === 'auth/invalid-login-credentials') {
+      // 3. If it fails, check if it's the demo account
+      if (email === 'citizen@demo.com' && (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential' || error.code === 'auth/invalid-login-credentials')) {
         try {
           const userCredential = await createUserWithEmailAndPassword(auth, email, password);
           const newUser = userCredential.user;
@@ -139,14 +138,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           
           await setDoc(doc(db, 'users', newUser.uid), userDoc);
           setUser(userDoc);
+          return;
         } catch (signupError) {
-          console.error("Signup failed during auto-registration:", signupError);
+          console.error("Demo signup failed:", signupError);
           throw signupError;
         }
-      } else {
-        console.error("Login failed:", error);
-        throw error;
       }
+      
+      console.error("Login failed:", error);
+      throw error;
     }
   };
 
