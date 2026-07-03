@@ -10,10 +10,10 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({ value, type = 'status'
 
   if (type === 'status') {
     switch (value) {
-      case 'Submitted':
+      case 'Reported':
         colorClasses = 'bg-primary-container/10 text-primary-container border-primary-container/20';
         break;
-      case 'AI Reviewing':
+      case 'Under Review':
         colorClasses = 'bg-secondary-container/20 text-secondary-fixed border-secondary-container/30';
         break;
       case 'Assigned':
@@ -24,6 +24,9 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({ value, type = 'status'
         break;
       case 'Resolved':
         colorClasses = 'bg-green-500/15 text-green-400 border-green-500/30';
+        break;
+      case 'Closed':
+        colorClasses = 'bg-surface-container-highest/50 text-on-surface-variant border-outline-variant/50';
         break;
     }
   } else {

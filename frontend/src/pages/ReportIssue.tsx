@@ -9,6 +9,7 @@ import { useAuth } from '../context/AuthContext';
 import { GlassCard } from '../components/ui/GlassCard';
 import { AIResultCard } from '../components/ui/AIResultCard';
 import confetti from 'canvas-confetti';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 // Map marker pinner helper
 const MapEventsHelper = ({ onPin }: { onPin: (latlng: L.LatLng) => void }) => {
@@ -22,7 +23,7 @@ const MapEventsHelper = ({ onPin }: { onPin: (latlng: L.LatLng) => void }) => {
 
 export const ReportIssue: React.FC = () => {
   const navigate = useNavigate();
-  const { addIssue } = useIssues();
+  const { addIssue, issues, supportIssue } = useIssues();
   const { showToast } = useNotification();
   const { user } = useAuth();
 
@@ -32,19 +33,24 @@ export const ReportIssue: React.FC = () => {
   // Form States (Step 1)
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [category, setCategory] = useState('Infrastructure');
+  const [category, setCategory] = useState('Potholes');
   const [severity, setSeverity] = useState<'Low' | 'Medium' | 'High' | 'Critical'>('Medium');
-  const [image, setImage] = useState<string>('https://images.unsplash.com/photo-1515162305285-0293e4767cc2?auto=format&fit=crop&q=80&w=600');
+  const [image, setImage] = useState<string>('');
   const [pin, setPin] = useState<L.LatLng>(new L.LatLng(40.7580, -73.9855));
   const [address, setAddress] = useState('720 5th Ave, New York, NY 10019');
+  const [isAnonymous, setIsAnonymous] = useState(false);
 
   // AI Assist (Step 1)
   const [isAiAssisting, setIsAiAssisting] = useState(false);
+  const [isAnalyzingImage, setIsAnalyzingImage] = useState(false);
+  const [duplicateIssueId, setDuplicateIssueId] = useState<string | null>(null);
 
   // AI Suggestions (Step 2)
   const [aiSuggestions, setAiSuggestions] = useState({
     title: '',
+    description: '',
     category: '',
+    severity: 'Medium',
     department: '',
     confidence: 0.95,
     duplicateFound: false
@@ -71,6 +77,63 @@ export const ReportIssue: React.FC = () => {
     }, 1200);
   };
 
+  const simulateAiImageAnalysis = async (base64Image: string) => {
+    setIsAnalyzingImage(true);
+    showToast('AI analyzing image signature...', 'info');
+
+    try {
+      const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+      if (!apiKey) {
+        showToast('Gemini API key not found. Please add to .env.local', 'error');
+        return;
+      }
+
+      const genAI = new GoogleGenerativeAI(apiKey);
+      const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+
+      const base64Data = base64Image.split(',')[1];
+      const mimeType = base64Image.split(';')[0].split(':')[1];
+
+      const prompt = `Analyze this image of a civic issue. Return ONLY a valid JSON object (no markdown formatting, no backticks) with the following fields:
+"category": one of ["Potholes", "Water Leaks", "Broken Streetlights", "Garbage Accumulation", "Drainage Blockages", "Road Damage", "Sanitation Issues", "Other"].
+"confidence": a number between 0 and 1 indicating how confident you are.
+"severity": one of ["Low", "Medium", "High", "Critical"].
+"department": one of ["Public Works", "Sanitation", "Traffic Control", "Urban Operations"].
+"title": A short, clear title for the issue.
+"description": A detailed description of what is seen in the image.`;
+
+      const result = await model.generateContent([
+        prompt,
+        { inlineData: { data: base64Data, mimeType } }
+      ]);
+
+      const jsonStr = result.response.text().replace(/```json/g, '').replace(/```/g, '').trim();
+      const aiData = JSON.parse(jsonStr);
+
+      setCategory(aiData.category || 'Other');
+      setTitle(aiData.title || '');
+      setDescription(aiData.description || '');
+      setSeverity(aiData.severity || 'Medium');
+
+      setAiSuggestions(prev => ({
+        ...prev,
+        title: aiData.title || '',
+        description: aiData.description || '',
+        category: aiData.category || 'Other',
+        severity: aiData.severity || 'Medium',
+        department: aiData.department || 'Urban Operations',
+        confidence: aiData.confidence || 0.95
+      }));
+
+      showToast('AI successfully extracted issue details from image', 'success');
+    } catch (error) {
+      console.error(error);
+      showToast('AI analysis failed. Please fill manually.', 'error');
+    } finally {
+      setIsAnalyzingImage(false);
+    }
+  };
+
   const handleImageDrop = (e: React.DragEvent) => {
     e.preventDefault();
     const file = e.dataTransfer.files[0];
@@ -78,7 +141,7 @@ export const ReportIssue: React.FC = () => {
       const reader = new FileReader();
       reader.onload = () => {
         setImage(reader.result as string);
-        showToast('Image uploaded successfully', 'success');
+        simulateAiImageAnalysis(reader.result as string);
       };
       reader.readAsDataURL(file);
     }
@@ -90,7 +153,7 @@ export const ReportIssue: React.FC = () => {
       const reader = new FileReader();
       reader.onload = () => {
         setImage(reader.result as string);
-        showToast('Image uploaded successfully', 'success');
+        simulateAiImageAnalysis(reader.result as string);
       };
       reader.readAsDataURL(file);
     }
@@ -103,20 +166,39 @@ export const ReportIssue: React.FC = () => {
       return;
     }
 
+    // Duplicate detection heuristic
+    const duplicate = issues.find(i =>
+      i.category === category &&
+      Math.abs(i.location.lat - pin.lat) < 0.005 &&
+      Math.abs(i.location.lng - pin.lng) < 0.005
+    );
+
+    if (duplicate) {
+      setDuplicateIssueId(duplicate.id);
+    } else {
+      setDuplicateIssueId(null);
+    }
+
     // Set suggestions based on user choice
-    setAiSuggestions({
-      title: title.includes('Pothole') ? title : `AI Suggestion: Pothole defect in ${category}`,
+    setAiSuggestions(prev => ({
+      ...prev,
+      title: title,
+      description: description,
       category: category,
-      department: category === 'Infrastructure' ? 'Public Works' : category === 'Waste' ? 'Sanitation' : 'Urban Operations',
-      confidence: 0.96,
-      duplicateFound: category === 'Infrastructure' && pin.lat > 40.7570 && pin.lat < 40.7590
-    });
+      severity: severity,
+      department: ['Potholes', 'Road Damage'].includes(category) ? 'Public Works' : ['Garbage Accumulation', 'Sanitation Issues'].includes(category) ? 'Sanitation' : 'Urban Operations',
+      duplicateFound: !!duplicate
+    }));
 
     setStep(2);
   };
 
   // Trigger Step 2 -> Step 3
   const handleVerifySuggestions = () => {
+    setTitle(aiSuggestions.title);
+    setDescription(aiSuggestions.description);
+    setCategory(aiSuggestions.category);
+    setSeverity(aiSuggestions.severity as any);
     setStep(3);
   };
 
@@ -135,24 +217,30 @@ export const ReportIssue: React.FC = () => {
       setSubmissionProgress(timeline[i]);
       await new Promise(r => setTimeout(r, 800));
     }
-        
+
     try {
       // Finalize state
-      const generatedId = await addIssue({
-        title: aiSuggestions.title || title,
-        description: description,
-        category: aiSuggestions.category || category,
-        severity: severity,
-        location: {
-          lat: pin.lat,
-          lng: pin.lng,
-          address: address
-        },
-        image: image,
-        citizenName: user ? user.name : 'Citizen User',
-        citizenAvatar: user ? user.avatar : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=120',
-        department: aiSuggestions.department || 'Public Works'
-      });
+      const generatedId = await Promise.race([
+        addIssue({
+          title: aiSuggestions.title || title,
+          description: description,
+          category: aiSuggestions.category || category,
+          severity: severity,
+          isAnonymous: isAnonymous,
+          location: {
+            lat: pin.lat,
+            lng: pin.lng,
+            address: address
+          },
+          image: image,
+          citizenName: user ? user.name : 'Citizen User',
+          citizenAvatar: user ? user.avatar : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=120',
+          department: aiSuggestions.department || 'Public Works'
+        }),
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error("Network timeout: Firebase is taking too long. Please check your internet connection or Firebase Security Rules.")), 10000)
+        )
+      ]);
 
       // Trigger confetti!
       confetti({
@@ -163,8 +251,8 @@ export const ReportIssue: React.FC = () => {
 
       showToast(`Complaint submitted successfully as ${generatedId}`, 'success');
       navigate(`/success?id=${generatedId}`);
-    } catch (error) {
-      showToast('Failed to submit complaint to Firestore', 'error');
+    } catch (error: any) {
+      showToast(error.message || 'Failed to submit complaint to Firestore', 'error');
     } finally {
       setIsSubmitting(false);
     }
@@ -187,46 +275,43 @@ export const ReportIssue: React.FC = () => {
         <div className="flex items-center justify-between relative max-w-lg mx-auto">
           {/* Step line */}
           <div className="absolute left-0 top-5 transform -translate-y-1/2 w-full h-[2px] bg-surface-container-high z-0" />
-          <div 
-            className="absolute left-0 top-5 transform -translate-y-1/2 h-[2px] bg-primary-container z-0 shadow-[0_0_8px_rgba(0,240,255,0.5)] transition-all duration-500" 
+          <div
+            className="absolute left-0 top-5 transform -translate-y-1/2 h-[2px] bg-primary-container z-0 shadow-[0_0_8px_rgba(0,240,255,0.5)] transition-all duration-500"
             style={{ width: step === 1 ? '0%' : step === 2 ? '50%' : '100%' }}
           />
 
           {/* Steps */}
-          <div 
+          <div
             className={`relative z-10 flex flex-col items-center gap-1.5 cursor-pointer`}
             onClick={() => step > 1 && setStep(1)}
           >
-            <div className={`w-10 h-10 rounded-full flex items-center justify-center border font-mono text-sm font-bold transition-all ${
-              step >= 1 
-                ? 'bg-primary-container text-on-primary-container border-primary-container shadow-[0_0_15px_rgba(0,240,255,0.3)]' 
+            <div className={`w-10 h-10 rounded-full flex items-center justify-center border font-mono text-sm font-bold transition-all ${step >= 1
+                ? 'bg-primary-container text-on-primary-container border-primary-container shadow-[0_0_15px_rgba(0,240,255,0.3)]'
                 : 'bg-surface-container-highest border-outline-variant text-on-surface-variant'
-            }`}>
+              }`}>
               1
             </div>
             <span className={`text-[10px] uppercase font-mono tracking-wider ${step >= 1 ? 'text-primary' : 'text-on-surface-variant'}`}>Details</span>
           </div>
 
-          <div 
+          <div
             className={`relative z-10 flex flex-col items-center gap-1.5 cursor-pointer`}
             onClick={() => step > 2 && setStep(2)}
           >
-            <div className={`w-10 h-10 rounded-full flex items-center justify-center border font-mono text-sm font-bold transition-all ${
-              step >= 2 
-                ? 'bg-primary-container text-on-primary-container border-primary-container shadow-[0_0_15px_rgba(0,240,255,0.3)]' 
+            <div className={`w-10 h-10 rounded-full flex items-center justify-center border font-mono text-sm font-bold transition-all ${step >= 2
+                ? 'bg-primary-container text-on-primary-container border-primary-container shadow-[0_0_15px_rgba(0,240,255,0.3)]'
                 : 'bg-surface-container-highest border-outline-variant text-on-surface-variant'
-            }`}>
+              }`}>
               2
             </div>
             <span className={`text-[10px] uppercase font-mono tracking-wider ${step >= 2 ? 'text-primary' : 'text-on-surface-variant'}`}>AI Analysis</span>
           </div>
 
           <div className="relative z-10 flex flex-col items-center gap-1.5">
-            <div className={`w-10 h-10 rounded-full flex items-center justify-center border font-mono text-sm font-bold transition-all ${
-              step === 3 
-                ? 'bg-primary-container text-on-primary-container border-primary-container shadow-[0_0_15px_rgba(0,240,255,0.3)]' 
+            <div className={`w-10 h-10 rounded-full flex items-center justify-center border font-mono text-sm font-bold transition-all ${step === 3
+                ? 'bg-primary-container text-on-primary-container border-primary-container shadow-[0_0_15px_rgba(0,240,255,0.3)]'
                 : 'bg-surface-container-highest border-outline-variant text-on-surface-variant'
-            }`}>
+              }`}>
               3
             </div>
             <span className={`text-[10px] uppercase font-mono tracking-wider ${step === 3 ? 'text-primary' : 'text-on-surface-variant'}`}>Review</span>
@@ -238,7 +323,7 @@ export const ReportIssue: React.FC = () => {
       <GlassCard noHover className="w-full border border-white/10 bg-[#031427]/40 shadow-xl mb-12">
         {step === 1 && (
           <div className="flex flex-col gap-6">
-            
+
             {/* Title & AI Assist */}
             <div className="flex flex-col gap-2">
               <label className="font-mono text-[10px] uppercase tracking-widest text-white/50">Issue Title</label>
@@ -285,13 +370,13 @@ export const ReportIssue: React.FC = () => {
             {/* Category Cards Selector */}
             <div className="flex flex-col gap-2">
               <label className="font-mono text-[10px] uppercase tracking-widest text-white/50">Category</label>
-              <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-                {['Infrastructure', 'Waste', 'Traffic', 'Safety', 'Noise'].map((catName) => {
-                  let iconName = 'build';
-                  if (catName === 'Waste') iconName = 'delete';
-                  if (catName === 'Traffic') iconName = 'traffic';
-                  if (catName === 'Safety') iconName = 'campaign';
-                  if (catName === 'Noise') iconName = 'volume_up';
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {['Potholes', 'Water Leaks', 'Broken Streetlights', 'Garbage Accumulation', 'Drainage Blockages', 'Road Damage', 'Sanitation Issues', 'Other'].map((catName) => {
+                  let iconName = 'report';
+                  if (['Potholes', 'Road Damage'].includes(catName)) iconName = 'add_road';
+                  else if (['Water Leaks', 'Drainage Blockages'].includes(catName)) iconName = 'water_drop';
+                  else if (catName === 'Broken Streetlights') iconName = 'lightbulb';
+                  else if (['Garbage Accumulation', 'Sanitation Issues'].includes(catName)) iconName = 'delete';
 
                   return (
                     <div key={catName} className="category-card relative">
@@ -303,7 +388,7 @@ export const ReportIssue: React.FC = () => {
                         onChange={() => setCategory(catName)}
                         className="hidden"
                       />
-                      <label 
+                      <label
                         htmlFor={`cat-${catName}`}
                         className="btn-glass flex flex-col items-center justify-center p-4 rounded-xl cursor-pointer hover:border-primary-container/40 border text-center h-24 select-none"
                       >
@@ -330,7 +415,7 @@ export const ReportIssue: React.FC = () => {
                       onChange={() => setSeverity(sev as any)}
                       className="hidden"
                     />
-                    <label 
+                    <label
                       htmlFor={`sev-${sev}`}
                       className="btn-glass py-2.5 px-1 rounded-xl text-[10px] font-mono font-bold uppercase tracking-widest text-center cursor-pointer border hover:border-primary-container/40 transition-all"
                     >
@@ -341,22 +426,42 @@ export const ReportIssue: React.FC = () => {
               </div>
             </div>
 
+            {/* Anonymous Reporting */}
+            <div className="flex items-center gap-3 bg-black/20 p-4 rounded-xl border border-white/5 hover:border-white/10 transition-colors">
+              <input
+                type="checkbox"
+                id="anonymous"
+                checked={isAnonymous}
+                onChange={(e) => setIsAnonymous(e.target.checked)}
+                className="w-4 h-4 rounded border-white/30 bg-transparent text-primary-container focus:ring-primary-container focus:ring-offset-0 focus:ring-1"
+              />
+              <label htmlFor="anonymous" className="flex flex-col cursor-pointer select-none">
+                <span className="text-sm font-bold text-white tracking-wide">Report Anonymously</span>
+                <span className="text-[10px] font-mono text-white/40 uppercase tracking-widest">Hide your identity on the public ledger</span>
+              </label>
+            </div>
+
             {/* Drag & Drop Image Upload */}
             <div className="flex flex-col gap-2">
               <label className="font-mono text-[10px] uppercase tracking-widest text-white/50">Upload Media Evidence</label>
-              <div 
+              <div
                 onDragOver={(e) => e.preventDefault()}
                 onDrop={handleImageDrop}
                 className="w-full border-2 border-dashed border-outline-variant/50 hover:border-primary-container/50 bg-black/10 rounded-xl p-8 flex flex-col items-center justify-center text-center cursor-pointer transition-all gap-3 relative"
               >
-                <input 
-                  type="file" 
-                  accept="image/*" 
+                <input
+                  type="file"
+                  accept="image/*"
                   onChange={handleImageSelect}
                   className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                 />
-                
-                {image ? (
+
+                {isAnalyzingImage ? (
+                  <div className="flex flex-col items-center justify-center gap-3">
+                    <span className="material-symbols-outlined text-4xl text-primary-container animate-spin">sync</span>
+                    <span className="text-xs text-primary-container font-bold uppercase tracking-widest animate-pulse">Neural Vision Analyzing...</span>
+                  </div>
+                ) : image ? (
                   <div className="flex items-center gap-4">
                     <img src={image} alt="Preview" className="w-20 h-16 object-cover rounded-lg border border-white/20" />
                     <div className="text-left">
@@ -380,9 +485,9 @@ export const ReportIssue: React.FC = () => {
             <div className="flex flex-col gap-2">
               <label className="font-mono text-[10px] uppercase tracking-widest text-white/50">Telemetry Location Pin</label>
               <div className="w-full h-64 rounded-xl overflow-hidden border border-white/10 relative">
-                <MapContainer 
-                  center={[pin.lat, pin.lng]} 
-                  zoom={14} 
+                <MapContainer
+                  center={[pin.lat, pin.lng]}
+                  zoom={14}
                   scrollWheelZoom={false}
                   className="w-full h-full"
                 >
@@ -397,7 +502,7 @@ export const ReportIssue: React.FC = () => {
                     showToast('GPS Telemetry coordinates pinned!', 'success');
                   }} />
                 </MapContainer>
-                
+
                 {/* Floating Info Coordinate Overlay */}
                 <div className="absolute bottom-4 left-4 z-20 pointer-events-none">
                   <div className="bg-[#00060d]/80 backdrop-blur-md px-3 py-1.5 rounded border border-primary-container/40 text-[9px] font-mono text-primary-container font-semibold uppercase">
@@ -421,11 +526,35 @@ export const ReportIssue: React.FC = () => {
 
         {step === 2 && (
           <div className="flex flex-col gap-6">
+            {duplicateIssueId && (
+              <GlassCard noHover className="p-5 border border-error/30 bg-error/5 relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-error/10 rounded-full blur-[40px] -mr-10 -mt-10"></div>
+                <h4 className="font-mono text-[10px] uppercase tracking-widest text-error font-bold mb-2 flex items-center gap-1.5">
+                  <span className="material-symbols-outlined text-[16px]">warning</span>
+                  Similar Issue Detected Nearby
+                </h4>
+                <p className="text-xs text-white/80 font-light mb-4 leading-relaxed">
+                  Our system found a highly similar report within 500m of your pinned location. Endorsing an existing report helps resolve it faster by increasing its priority score.
+                </p>
+                <button
+                  onClick={() => {
+                    supportIssue(duplicateIssueId);
+                    showToast('Endorsed existing issue successfully!', 'success');
+                    navigate(`/issues/${duplicateIssueId}`);
+                  }}
+                  className="w-full py-3 rounded-xl bg-error/20 hover:bg-error/30 border border-error/50 transition-colors font-label-caps text-[10px] font-bold uppercase tracking-widest flex items-center justify-center gap-2 text-error"
+                >
+                  <span className="material-symbols-outlined text-[16px]">thumb_up</span>
+                  Endorse Existing Report Instead
+                </button>
+              </GlassCard>
+            )}
+
             <h3 className="font-display-lg text-lg font-bold text-white uppercase tracking-tight flex items-center gap-2">
               <span className="material-symbols-outlined text-primary-container animate-pulse">insights</span>
               AI Detected Metadata Recommendations
             </h3>
-            
+
             <p className="text-xs text-white/70 font-light leading-relaxed">
               We parsed your image through our neural model and mapped it against similar neighborhood reports. Please verify, edit, and confirm the suggested titles and categories below.
             </p>
@@ -437,11 +566,13 @@ export const ReportIssue: React.FC = () => {
               department={aiSuggestions.department}
               duplicateFound={aiSuggestions.duplicateFound}
               suggestedTitle={aiSuggestions.title}
+              suggestedDescription={aiSuggestions.description}
+              severity={aiSuggestions.severity}
               isEditing={true}
               onEditChange={(field, val) => {
                 setAiSuggestions(prev => ({
                   ...prev,
-                  [field === 'title' ? 'title' : field === 'category' ? 'category' : 'department']: val
+                  [field]: val
                 }));
               }}
             />
@@ -473,14 +604,14 @@ export const ReportIssue: React.FC = () => {
               <span className="material-symbols-outlined text-primary-container">fact_check</span>
               Review & Submit Complaint
             </h3>
-            
+
             <p className="text-xs text-white/70 font-light leading-relaxed">
               Verify your ticket details. Once submitted, this report will enter the civic workflow queue and notify local supervisors.
             </p>
 
             {/* Preview Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-[#000f21]/20 border border-white/10 p-5 rounded-xl">
-              
+
               {/* Left Column */}
               <div className="flex flex-col gap-4">
                 <div>

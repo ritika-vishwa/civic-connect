@@ -143,11 +143,12 @@ export const MyComplaints: React.FC = () => {
               className="input-glass w-full rounded-lg px-3 py-2.5 text-xs font-mono"
             >
               <option value="All">All Statuses</option>
-              <option value="Submitted">Submitted</option>
-              <option value="AI Reviewing">AI Reviewing</option>
+              <option value="Reported">Reported</option>
+              <option value="Under Review">Under Review</option>
               <option value="Assigned">Assigned</option>
               <option value="In Progress">In Progress</option>
               <option value="Resolved">Resolved</option>
+              <option value="Closed">Closed</option>
             </select>
           </div>
 

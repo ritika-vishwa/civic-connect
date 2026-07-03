@@ -15,11 +15,12 @@ export const IssueCard: React.FC<IssueCardProps> = ({ issue, className = '' }) =
   // Map status to progress bar percentage
   const getProgressPercentage = (status: Issue['status']) => {
     switch (status) {
-      case 'Submitted': return 20;
-      case 'AI Reviewing': return 40;
-      case 'Assigned': return 60;
-      case 'In Progress': return 80;
+      case 'Reported': return 15;
+      case 'Under Review': return 30;
+      case 'Assigned': return 50;
+      case 'In Progress': return 75;
       case 'Resolved': return 100;
+      case 'Closed': return 100;
       default: return 0;
     }
   };
@@ -29,11 +30,14 @@ export const IssueCard: React.FC<IssueCardProps> = ({ issue, className = '' }) =
   // Material symbols based on category
   const getCategoryIcon = (cat: string) => {
     switch (cat.toLowerCase()) {
-      case 'infrastructure': return 'build';
-      case 'waste': return 'delete';
-      case 'traffic': return 'traffic';
-      case 'safety': return 'campaign';
-      case 'noise': return 'volume_up';
+      case 'potholes':
+      case 'road damage': return 'add_road';
+      case 'water leaks': 
+      case 'drainage blockages': return 'water_drop';
+      case 'broken streetlights': return 'lightbulb';
+      case 'garbage accumulation': 
+      case 'sanitation issues': return 'delete';
+      case 'other': return 'report';
       default: return 'report';
     }
   };

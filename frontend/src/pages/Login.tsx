@@ -44,8 +44,11 @@ export const Login: React.FC = () => {
         showToast('Email already in use. Please sign in instead.', 'error');
       } else if (err.code === 'auth/weak-password') {
         showToast('Password is too weak. Please use at least 6 characters.', 'error');
+      } else if (err.code === 'permission-denied') {
+        showToast('Firestore permission denied. Please set your Firebase Security Rules to Test Mode.', 'error');
       } else {
-        showToast('Authentication failed. Please check your credentials.', 'error');
+        console.error("Login/Signup Error:", err);
+        showToast(err.message || 'Authentication failed. Please check your credentials.', 'error');
       }
     } finally {
       setIsSubmitting(false);
@@ -107,12 +110,7 @@ export const Login: React.FC = () => {
         {user ? 'Back to Dashboard' : 'Back to Home'}
       </motion.button>
 
-      {/* Background glow effects matching the theme */}
-      <motion.div 
-        animate={{ scale: [1, 1.05, 1], opacity: [0.08, 0.12, 0.08] }}
-        transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80vw] h-[80vw] max-w-[800px] max-h-[800px] rounded-full bg-primary-container blur-[150px] mix-blend-screen pointer-events-none"
-      />
+      {/* Removed the background glow effect to prevent green flash */}
 
       <motion.div 
         variants={containerVariants}

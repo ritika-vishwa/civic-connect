@@ -125,6 +125,12 @@
   box-shadow: 0 0 0 1px #00f0ff;
 }
 
+/* Fix for browser dropdown option visibility */
+select option {
+  background-color: #031427;
+  color: #d3e4fe;
+}
+
 /* Fix for browser autofill overriding the glass effect */
 .input-glass:-webkit-autofill,
 .input-glass:-webkit-autofill:hover, 

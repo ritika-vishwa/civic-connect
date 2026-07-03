@@ -211,8 +211,8 @@ export const OfficerWorkspace: React.FC = () => {
                         onChange={(e) => setStatusVal(e.target.value as any)}
                         className="input-glass w-full rounded-lg px-3 py-2 text-xs font-mono"
                       >
-                        <option value="Submitted">Submitted</option>
-                        <option value="AI Reviewing">AI Reviewing</option>
+                        <option value="Reported">Reported</option>
+                        <option value="Under Review">Under Review</option>
                         <option value="Assigned">Assigned</option>
                         <option value="In Progress">In Progress</option>
                         <option value="Resolved">Resolved</option>

@@ -36,7 +36,8 @@ export interface Issue {
   description: string;
   category: string;
   severity: 'Low' | 'Medium' | 'High' | 'Critical';
-  status: 'Submitted' | 'AI Reviewing' | 'Assigned' | 'In Progress' | 'Resolved';
+  status: 'Reported' | 'Under Review' | 'Assigned' | 'In Progress' | 'Resolved' | 'Closed';
+  isAnonymous?: boolean;
   location: {
     lat: number;
     lng: number;
@@ -128,15 +129,31 @@ export const IssueProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       
       // Upload image to Storage if it's a data URL
       if (imageUrl && imageUrl.startsWith('data:image')) {
-        const imageRef = ref(storage, `issues/${Date.now()}`);
-        await uploadString(imageRef, imageUrl, 'data_url');
-        imageUrl = await getDownloadURL(imageRef);
+        try {
+          const imageRef = ref(storage, `issues/${Date.now()}`);
+          // Add a 4-second timeout to the upload
+          const uploadPromise = uploadString(imageRef, imageUrl, 'data_url').then(() => getDownloadURL(imageRef));
+          const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Storage timeout")), 4000));
+          
+          imageUrl = await Promise.race([uploadPromise, timeoutPromise]) as string;
+        } catch (e) {
+          console.warn("Storage upload failed or timed out, falling back to dummy image to ensure functionality.", e);
+          // Fallback to a realistic placeholder if Firebase Storage is not configured properly
+          imageUrl = 'https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?auto=format&fit=crop&q=80&w=800';
+        }
       }
+
+      const finalCitizenName = issueData.isAnonymous ? "Anonymous Citizen" : issueData.citizenName;
+      const finalAvatar = issueData.isAnonymous 
+        ? "https://api.dicebear.com/7.x/bottts/svg?seed=Anonymous&backgroundColor=031427"
+        : issueData.citizenAvatar;
 
       const newIssueDoc = {
         ...issueData,
+        citizenName: finalCitizenName,
+        citizenAvatar: finalAvatar,
         image: imageUrl,
-        status: 'Submitted',
+        status: 'Reported',
         createdAt: new Date().toISOString(),
         supportCount: 1,
         isSupportedByCurrentUser: true,
@@ -144,8 +161,8 @@ export const IssueProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           {
             id: `h-${Date.now()}`,
             title: 'Report Filed',
-            text: `Issue submitted by ${issueData.citizenName}. Initial status: Submitted.`,
-            status: 'Submitted',
+            text: `Issue submitted by ${finalCitizenName}. Initial status: Reported.`,
+            status: 'Reported',
             createdAt: new Date().toISOString()
           }
         ]

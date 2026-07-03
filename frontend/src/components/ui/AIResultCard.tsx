@@ -7,6 +7,8 @@ interface AIResultCardProps {
   department: string;
   duplicateFound: boolean;
   suggestedTitle: string;
+  suggestedDescription?: string;
+  severity?: string;
   isEditing?: boolean;
   onEditChange?: (field: string, val: string) => void;
 }
@@ -17,6 +19,8 @@ export const AIResultCard: React.FC<AIResultCardProps> = ({
   department,
   duplicateFound,
   suggestedTitle,
+  suggestedDescription = '',
+  severity = 'Medium',
   isEditing = false,
   onEditChange
 }) => {
@@ -61,7 +65,7 @@ export const AIResultCard: React.FC<AIResultCardProps> = ({
         {/* Right Side: AI Detections & Details */}
         <div className="flex-grow w-full flex flex-col gap-4">
           <div className="flex justify-between items-start gap-4">
-            <div>
+            <div className="w-full">
               <span className="font-label-caps text-[10px] text-primary-container uppercase tracking-widest font-mono font-bold">Suggested Title</span>
               {isEditing && onEditChange ? (
                 <input
@@ -76,20 +80,38 @@ export const AIResultCard: React.FC<AIResultCardProps> = ({
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="flex justify-between items-start gap-4">
+            <div className="w-full">
+              <span className="font-label-caps text-[10px] text-primary-container uppercase tracking-widest font-mono font-bold">Suggested Description</span>
+              {isEditing && onEditChange ? (
+                <textarea
+                  value={suggestedDescription}
+                  onChange={(e) => onEditChange('description', e.target.value)}
+                  className="input-glass mt-1 px-3 py-1.5 rounded-lg text-xs w-full min-h-[60px] focus:ring-1 resize-none"
+                />
+              ) : (
+                <p className="text-xs text-white/80 mt-1">{suggestedDescription}</p>
+              )}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
-              <span className="font-label-caps text-[10px] text-white/40 uppercase tracking-widest font-mono">Suggested Category</span>
+              <span className="font-label-caps text-[10px] text-white/40 uppercase tracking-widest font-mono">Category</span>
               {isEditing && onEditChange ? (
                 <select
                   value={category}
                   onChange={(e) => onEditChange('category', e.target.value)}
                   className="input-glass mt-1 px-3 py-1.5 rounded-lg text-xs w-full focus:ring-1"
                 >
-                  <option value="Infrastructure">Infrastructure</option>
-                  <option value="Waste">Waste</option>
-                  <option value="Traffic">Traffic</option>
-                  <option value="Safety">Safety</option>
-                  <option value="Noise">Noise</option>
+                  <option value="Potholes">Potholes</option>
+                  <option value="Water Leaks">Water Leaks</option>
+                  <option value="Broken Streetlights">Broken Streetlights</option>
+                  <option value="Garbage Accumulation">Garbage Accumulation</option>
+                  <option value="Drainage Blockages">Drainage Blockages</option>
+                  <option value="Road Damage">Road Damage</option>
+                  <option value="Sanitation Issues">Sanitation Issues</option>
+                  <option value="Other">Other</option>
                 </select>
               ) : (
                 <div className="text-white text-sm font-semibold uppercase tracking-wider mt-1">{category}</div>
@@ -97,7 +119,25 @@ export const AIResultCard: React.FC<AIResultCardProps> = ({
             </div>
 
             <div>
-              <span className="font-label-caps text-[10px] text-white/40 uppercase tracking-widest font-mono">Target Department</span>
+              <span className="font-label-caps text-[10px] text-white/40 uppercase tracking-widest font-mono">Severity</span>
+              {isEditing && onEditChange ? (
+                <select
+                  value={severity}
+                  onChange={(e) => onEditChange('severity', e.target.value)}
+                  className="input-glass mt-1 px-3 py-1.5 rounded-lg text-xs w-full focus:ring-1"
+                >
+                  <option value="Low">Low</option>
+                  <option value="Medium">Medium</option>
+                  <option value="High">High</option>
+                  <option value="Critical">Critical</option>
+                </select>
+              ) : (
+                <div className="text-white text-sm font-semibold uppercase tracking-wider mt-1">{severity}</div>
+              )}
+            </div>
+
+            <div>
+              <span className="font-label-caps text-[10px] text-white/40 uppercase tracking-widest font-mono">Department</span>
               {isEditing && onEditChange ? (
                 <input
                   type="text"
