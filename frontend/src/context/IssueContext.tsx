@@ -1,16 +1,19 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { UserRole } from './AuthContext';
-import { 
-  collection, 
-  onSnapshot, 
-  addDoc, 
-  updateDoc, 
-  doc, 
+import {
+  collection,
+  onSnapshot,
+  addDoc,
+  updateDoc,
+  doc,
   query,
-  orderBy
+  orderBy,
+  arrayUnion,
+  arrayRemove
 } from 'firebase/firestore';
 import { ref, uploadString, getDownloadURL } from 'firebase/storage';
-import { db, storage } from '../firebase';
+import { auth, db, storage } from '../firebase';
+import { useAuth } from './AuthContext';
 
 export interface Comment {
   id: string;
@@ -50,6 +53,7 @@ export interface Issue {
   createdAt: string;
   supportCount: number;
   isSupportedByCurrentUser: boolean;
+  supportedBy: string[];
   department: string;
   assignedWorker?: string;
   aiAnalysis?: {
@@ -66,7 +70,7 @@ export interface Issue {
 
 interface IssueContextProps {
   issues: Issue[];
-  addIssue: (issueData: Omit<Issue, 'id' | 'createdAt' | 'supportCount' | 'isSupportedByCurrentUser' | 'comments' | 'history' | 'status'>) => Promise<string>;
+  addIssue: (issueData: Omit<Issue, 'id' | 'createdAt' | 'supportCount' | 'isSupportedByCurrentUser' | 'comments' | 'history' | 'status' | 'supportedBy'>) => Promise<string>;
   supportIssue: (id: string) => Promise<void>;
   addComment: (id: string, commentText: string, user: { name: string; avatar: string; role: UserRole }) => Promise<void>;
   updateStatus: (id: string, status: Issue['status'], updateText: string, resolutionImage?: string) => Promise<void>;
@@ -76,6 +80,7 @@ interface IssueContextProps {
 const IssueContext = createContext<IssueContextProps | undefined>(undefined);
 
 export const IssueProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { user } = useAuth();
   const [issues, setIssues] = useState<Issue[]>([]);
   const [rawIssues, setRawIssues] = useState<any[]>([]);
   const [comments, setComments] = useState<any[]>([]);
@@ -114,19 +119,26 @@ export const IssueProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   useEffect(() => {
     const merged = rawIssues.map(issue => {
       const issueComments = comments.filter(c => c.issueId === issue.id);
+
+      const supportedByArray = issue.supportedBy || [];
+      const isSupported = user ? supportedByArray.includes(user.uid) : false;
+      const count = supportedByArray.length;
+
       return {
         ...issue,
         comments: issueComments,
-        history: issue.history || []
+        history: issue.history || [],
+        isSupportedByCurrentUser: isSupported,
+        supportCount: count
       } as Issue;
     });
     setIssues(merged);
-  }, [rawIssues, comments]);
+  }, [rawIssues, comments, user]);
 
-  const addIssue = async (issueData: Omit<Issue, 'id' | 'createdAt' | 'supportCount' | 'isSupportedByCurrentUser' | 'comments' | 'history' | 'status'>) => {
+  const addIssue = async (issueData: Omit<Issue, 'id' | 'createdAt' | 'supportCount' | 'isSupportedByCurrentUser' | 'comments' | 'history' | 'status' | 'supportedBy'>) => {
     try {
       let imageUrl = issueData.image;
-      
+
       // Upload image to Storage if it's a data URL
       if (imageUrl && imageUrl.startsWith('data:image')) {
         try {
@@ -134,7 +146,7 @@ export const IssueProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           // Add a 4-second timeout to the upload
           const uploadPromise = uploadString(imageRef, imageUrl, 'data_url').then(() => getDownloadURL(imageRef));
           const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Storage timeout")), 4000));
-          
+
           imageUrl = await Promise.race([uploadPromise, timeoutPromise]) as string;
         } catch (e) {
           console.warn("Storage upload failed or timed out, falling back to dummy image to ensure functionality.", e);
@@ -144,7 +156,7 @@ export const IssueProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       }
 
       const finalCitizenName = issueData.isAnonymous ? "Anonymous Citizen" : issueData.citizenName;
-      const finalAvatar = issueData.isAnonymous 
+      const finalAvatar = issueData.isAnonymous
         ? "https://api.dicebear.com/7.x/bottts/svg?seed=Anonymous&backgroundColor=031427"
         : issueData.citizenAvatar;
 
@@ -155,8 +167,7 @@ export const IssueProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         image: imageUrl,
         status: 'Reported',
         createdAt: new Date().toISOString(),
-        supportCount: 1,
-        isSupportedByCurrentUser: true,
+        supportedBy: auth.currentUser ? [auth.currentUser.uid] : [],
         history: [
           {
             id: `h-${Date.now()}`,
@@ -167,7 +178,7 @@ export const IssueProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           }
         ]
       };
-      
+
       const docRef = await addDoc(collection(db, 'issues'), newIssueDoc);
       return docRef.id;
     } catch (error) {
@@ -177,18 +188,26 @@ export const IssueProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const supportIssue = async (id: string) => {
+    if (!user) return;
     const issue = issues.find(i => i.id === id);
     if (!issue) return;
-    
-    // Simplistic toggle logic. Real implementation might use an array of upvoted user UIDs.
-    const isSupported = !issue.isSupportedByCurrentUser;
-    const newCount = issue.supportCount + (isSupported ? 1 : -1);
-    
+
+    const isSupported = issue.isSupportedByCurrentUser;
     const issueRef = doc(db, 'issues', id);
-    await updateDoc(issueRef, {
-      supportCount: newCount,
-      isSupportedByCurrentUser: isSupported
-    });
+
+    try {
+      if (isSupported) {
+        await updateDoc(issueRef, {
+          supportedBy: arrayRemove(user.uid)
+        });
+      } else {
+        await updateDoc(issueRef, {
+          supportedBy: arrayUnion(user.uid)
+        });
+      }
+    } catch (error) {
+      console.error("Error supporting issue:", error);
+    }
   };
 
   const addComment = async (id: string, commentText: string, user: { name: string; avatar: string; role: UserRole }) => {
@@ -201,7 +220,7 @@ export const IssueProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       createdAt: new Date().toISOString(),
       isOfficial: user.role === 'officer' || user.role === 'admin'
     };
-    
+
     await addDoc(collection(db, 'comments'), newComment);
   };
 

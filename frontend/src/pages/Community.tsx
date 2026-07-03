@@ -3,142 +3,175 @@ import { GlassCard } from '../components/ui/GlassCard';
 import { useAuth } from '../context/AuthContext';
 import { useNotification } from '../context/NotificationContext';
 
+import { collection, query, orderBy, onSnapshot, addDoc, updateDoc, doc, arrayUnion, arrayRemove } from 'firebase/firestore';
+import { ref, uploadString, getDownloadURL } from 'firebase/storage';
+import { db, storage } from '../firebase';
+
+interface Comment {
+  id: string;
+  postId: string;
+  userName: string;
+  text: string;
+  createdAt: string;
+}
+
 interface Post {
   id: string;
   authorName: string;
   authorAvatar: string;
-  authorRole: 'citizen' | 'officer' | 'admin';
+  authorRole: 'citizen' | 'officer' | 'admin' | 'moderator';
   isOfficial?: boolean;
   title: string;
   description: string;
   image?: string;
   upvotes: number;
   hasUpvoted: boolean;
+  upvotedBy: string[];
   commentsCount: number;
   createdAt: string;
-  comments: {
-    id: string;
-    userName: string;
-    text: string;
-    createdAt: string;
-  }[];
+  comments: Comment[];
 }
 
-const INITIAL_POSTS: Post[] = [
-  {
-    id: 'p-1',
-    authorName: 'Department of Parks & Recreation',
-    authorAvatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=120',
-    authorRole: 'admin',
-    isOfficial: true,
-    title: 'Downtown Park Revitalization Completed',
-    description: 'We are thrilled to announce that the playground equipment replacement and landscaping at Sector 3 Downtown Park has been finalized. Thank you to everyone who provided feedback on this design! Enjoy the new green space.',
-    image: 'https://images.unsplash.com/photo-1548625361-155de6c7f54d?auto=format&fit=crop&q=80&w=800',
-    upvotes: 112,
-    hasUpvoted: false,
-    commentsCount: 2,
-    createdAt: '2026-07-02T10:00:00Z',
-    comments: [
-      { id: 'c-1', userName: 'Arthur Dent', text: 'This looks fantastic! The kids are going to love the new swings.', createdAt: '2026-07-02T11:00:00Z' },
-      { id: 'c-2', userName: 'Sarah Connor', text: 'Great work! Thanks for addressing the safety netting request.', createdAt: '2026-07-02T12:30:00Z' }
-    ]
-  },
-  {
-    id: 'p-2',
-    authorName: 'Arthur Dent',
-    authorAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=120',
-    authorRole: 'citizen',
-    title: 'Community Cleanup Drive - Join Us!',
-    description: 'Looking for volunteers this Saturday morning at 9:00 AM. We will be clearing garbage along the West Park walkway. Garbage bags and picker tools will be provided by the local Sanitation office. Let us clean up our neighborhood!',
-    upvotes: 45,
-    hasUpvoted: false,
-    commentsCount: 1,
-    createdAt: '2026-07-03T08:00:00Z',
-    comments: [
-      { id: 'c-3', userName: 'Ford Prefect', text: 'Count me in. Bringing a couple of friends along.', createdAt: '2026-07-03T09:15:00Z' }
-    ]
-  }
-];
-
 export const Community: React.FC = () => {
-  const [posts, setPosts] = useState<Post[]>(INITIAL_POSTS);
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [rawPosts, setRawPosts] = useState<any[]>([]);
+  const [comments, setComments] = useState<Comment[]>([]);
   const [newTitle, setNewTitle] = useState('');
   const [newDesc, setNewDesc] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [activeCommentPostId, setActiveCommentPostId] = useState<string | null>(null);
   const [newCommentText, setNewCommentText] = useState('');
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   
   const { user } = useAuth();
   const { showToast } = useNotification();
 
-  const handleUpvote = (postId: string) => {
-    setPosts(prev =>
-      prev.map(post => {
-        if (post.id === postId) {
-          const upvoted = !post.hasUpvoted;
-          return {
-            ...post,
-            hasUpvoted: upvoted,
-            upvotes: post.upvotes + (upvoted ? 1 : -1)
-          };
-        }
-        return post;
-      })
-    );
+  // Firestore Listeners
+  React.useEffect(() => {
+    const q = query(collection(db, 'community_posts'), orderBy('createdAt', 'desc'));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      setRawPosts(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    });
+    return () => unsubscribe();
+  }, []);
+
+  React.useEffect(() => {
+    const q = query(collection(db, 'community_comments'), orderBy('createdAt', 'asc'));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      setComments(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Comment)));
+    });
+    return () => unsubscribe();
+  }, []);
+
+  // Merge Data
+  React.useEffect(() => {
+    const merged = rawPosts.map(post => {
+      const postComments = comments.filter(c => c.postId === post.id);
+      const upvotedByArray = post.upvotedBy || [];
+      return {
+        ...post,
+        comments: postComments,
+        commentsCount: postComments.length,
+        hasUpvoted: user ? upvotedByArray.includes(user.uid) : false,
+        upvotes: upvotedByArray.length > 0 ? upvotedByArray.length : (post.upvotes || 0)
+      } as Post;
+    });
+    setPosts(merged);
+  }, [rawPosts, comments, user]);
+
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        showToast('Image must be less than 5MB', 'error');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
-  const handleCreatePost = (e: React.FormEvent) => {
+  const handleUpvote = async (postId: string) => {
+    if (!user) {
+      showToast('You must be logged in to upvote', 'warning');
+      return;
+    }
+    const post = posts.find(p => p.id === postId);
+    if (!post) return;
+    
+    const postRef = doc(db, 'community_posts', postId);
+    try {
+      if (post.hasUpvoted) {
+        await updateDoc(postRef, { upvotedBy: arrayRemove(user.uid) });
+      } else {
+        await updateDoc(postRef, { upvotedBy: arrayUnion(user.uid) });
+      }
+    } catch (e) {
+      console.error(e);
+      showToast('Failed to upvote post', 'error');
+    }
+  };
+
+  const handleCreatePost = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newTitle.trim() || !newDesc.trim() || !user) return;
 
-    const newPost: Post = {
-      id: `p-${Date.now()}`,
-      authorName: user.name,
-      authorAvatar: user.avatar,
-      authorRole: user.role,
-      isOfficial: user.role !== 'citizen',
-      title: newTitle,
-      description: newDesc,
-      upvotes: 1,
-      hasUpvoted: true,
-      commentsCount: 0,
-      createdAt: new Date().toISOString(),
-      comments: []
-    };
+    try {
+      let finalImageUrl = null;
+      if (imagePreview) {
+        const imageRef = ref(storage, `community/${Date.now()}`);
+        const uploadPromise = uploadString(imageRef, imagePreview, 'data_url').then(() => getDownloadURL(imageRef));
+        const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Storage timeout")), 4000));
+        try {
+          finalImageUrl = await Promise.race([uploadPromise, timeoutPromise]) as string;
+        } catch (storageErr) {
+          console.warn("Storage upload failed, falling back to dummy image.", storageErr);
+          finalImageUrl = 'https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?auto=format&fit=crop&q=80&w=800';
+        }
+      }
 
-    setPosts([newPost, ...posts]);
-    setNewTitle('');
-    setNewDesc('');
-    setShowForm(false);
-    showToast('Community post published!', 'success');
+      await addDoc(collection(db, 'community_posts'), {
+        authorName: user.name,
+        authorAvatar: user.avatar,
+        authorRole: user.role,
+        isOfficial: user.role !== 'citizen',
+        title: newTitle,
+        description: newDesc,
+        image: finalImageUrl,
+        upvotedBy: [user.uid], // Author auto-upvotes
+        createdAt: new Date().toISOString()
+      });
+
+      setNewTitle('');
+      setNewDesc('');
+      setImagePreview(null);
+      setShowForm(false);
+      showToast('Community post published!', 'success');
+    } catch (error) {
+      console.error("Post creation failed", error);
+      showToast('Failed to publish post', 'error');
+    }
   };
 
-  const handleAddComment = (postId: string) => {
+  const handleAddComment = async (postId: string) => {
     if (!newCommentText.trim() || !user) return;
 
-    setPosts(prev =>
-      prev.map(post => {
-        if (post.id === postId) {
-          return {
-            ...post,
-            commentsCount: post.commentsCount + 1,
-            comments: [
-              ...post.comments,
-              {
-                id: `c-${Date.now()}`,
-                userName: user.name,
-                text: newCommentText,
-                createdAt: new Date().toISOString()
-              }
-            ]
-          };
-        }
-        return post;
-      })
-    );
-
-    setNewCommentText('');
-    showToast('Comment posted', 'success');
+    try {
+      await addDoc(collection(db, 'community_comments'), {
+        postId,
+        userName: user.name,
+        text: newCommentText,
+        createdAt: new Date().toISOString()
+      });
+      setNewCommentText('');
+      showToast('Comment posted', 'success');
+    } catch (error) {
+      console.error("Comment failed", error);
+      showToast('Failed to post comment', 'error');
+    }
   };
 
   return (
@@ -188,6 +221,28 @@ export const Community: React.FC = () => {
                   required
                 />
               </div>
+
+              {/* Image Upload for Post */}
+              <div className="flex items-center gap-4">
+                <label className="cursor-pointer flex items-center gap-2 text-white/50 hover:text-white transition-colors text-xs font-mono uppercase tracking-widest border border-white/10 px-4 py-2 rounded-xl bg-black/20">
+                  <span className="material-symbols-outlined text-[18px]">image</span>
+                  {imagePreview ? 'Change Image' : 'Attach Image'}
+                  <input type="file" accept="image/*" onChange={handleImageSelect} className="hidden" />
+                </label>
+                {imagePreview && (
+                  <div className="relative w-16 h-12 rounded overflow-hidden border border-primary-container/30">
+                    <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
+                    <button 
+                      type="button"
+                      onClick={() => setImagePreview(null)}
+                      className="absolute top-0 right-0 bg-black/50 text-white p-0.5"
+                    >
+                      <span className="material-symbols-outlined text-[10px]">close</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+
               <button 
                 type="submit"
                 className="btn-gradient-cyan self-end px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-widest flex items-center gap-1.5 shadow-[0_0_15px_rgba(0,240,255,0.15)]"
