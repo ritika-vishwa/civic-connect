@@ -180,7 +180,7 @@ export const Login: React.FC = () => {
         </motion.div>
 
         {/* Email/Password Form */}
-        <motion.form variants={itemVariants} onSubmit={handleAuth} className="w-full flex flex-col gap-4">
+        <motion.form variants={itemVariants} onSubmit={handleAuth} className="w-full flex flex-col gap-4" autoComplete="off">
           
           <AnimatePresence mode="popLayout">
             {isSignUp && (
@@ -199,6 +199,7 @@ export const Login: React.FC = () => {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Username"
+                  autoComplete="off"
                   className="input-glass w-full rounded-xl py-3.5 pl-11 pr-4 text-sm font-mono placeholder-white/30"
                   required={isSignUp}
                 />
@@ -221,6 +222,7 @@ export const Login: React.FC = () => {
                   value={locality}
                   onChange={(e) => setLocality(e.target.value)}
                   placeholder="Locality (e.g. Downtown)"
+                  autoComplete="off"
                   className="input-glass w-full rounded-xl py-3.5 pl-11 pr-4 text-sm font-mono placeholder-white/30"
                 />
               </motion.div>
@@ -236,6 +238,7 @@ export const Login: React.FC = () => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Email address"
+              autoComplete="off"
               className="input-glass w-full rounded-xl py-3.5 pl-11 pr-4 text-sm font-mono placeholder-white/30"
               required
             />
@@ -250,6 +253,7 @@ export const Login: React.FC = () => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Password"
+              autoComplete="new-password"
               className="input-glass w-full rounded-xl py-3.5 pl-11 pr-11 text-sm font-mono placeholder-white/30"
               required
             />
