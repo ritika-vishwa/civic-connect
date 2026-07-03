@@ -14,7 +14,7 @@ export const Login: React.FC = () => {
   const [isSignUp, setIsSignUp] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   
-  const { user, login, signup, loginWithGoogle } = useAuth();
+  const { user, login, signup, loginWithGoogle, resetPassword } = useAuth();
   const { showToast } = useNotification();
   const navigate = useNavigate();
 
@@ -41,7 +41,9 @@ export const Login: React.FC = () => {
       navigate('/dashboard');
     } catch (err: any) {
       if (err.code === 'auth/email-already-in-use') {
-        showToast('Email already in use. Please sign in instead.', 'error');
+        showToast('Email already in use. If you signed up with Google, please click Continue with Google.', 'error');
+      } else if (err.code === 'auth/invalid-credential' || err.code === 'auth/wrong-password') {
+        showToast('Invalid credentials. If you created this account with Google, please click Continue with Google.', 'error');
       } else if (err.code === 'auth/weak-password') {
         showToast('Password is too weak. Please use at least 6 characters.', 'error');
       } else if (err.code === 'permission-denied') {
@@ -79,6 +81,24 @@ export const Login: React.FC = () => {
       showToast('Demo login failed', 'error');
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleResetPassword = async () => {
+    if (!email.trim()) {
+      showToast('Please enter your email address first to reset password.', 'warning');
+      return;
+    }
+    try {
+      await resetPassword(email);
+      showToast('Password reset email sent! Check your inbox to set a password.', 'success');
+    } catch (err: any) {
+      console.error(err);
+      if (err.code === 'auth/user-not-found') {
+        showToast('No account found with this email.', 'error');
+      } else {
+        showToast('Failed to send password reset email.', 'error');
+      }
     }
   };
 
@@ -265,6 +285,18 @@ export const Login: React.FC = () => {
               </span>
             </button>
           </div>
+
+          {!isSignUp && (
+            <div className="flex justify-end w-full -mt-2 mb-2">
+              <button
+                type="button"
+                onClick={handleResetPassword}
+                className="text-[10px] uppercase font-mono tracking-widest text-white/50 hover:text-primary-container transition-colors"
+              >
+                Set / Forgot Password?
+              </button>
+            </div>
+          )}
 
           {/* Role Selector */}
           <div className="flex bg-[#031427]/80 backdrop-blur-md border border-white/10 rounded-xl overflow-hidden p-1">
