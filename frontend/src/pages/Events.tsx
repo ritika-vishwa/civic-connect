@@ -3,7 +3,7 @@ import { GlassCard } from '../components/ui/GlassCard';
 import { CustomDatePicker, CustomTimePicker } from '../components/ui/DateTimePicker';
 import { CustomSelect } from '../components/ui/CustomSelect';
 import { useNotification } from '../context/NotificationContext';
-import { collection, onSnapshot, query, doc, updateDoc, arrayUnion, arrayRemove, addDoc, orderBy } from 'firebase/firestore';
+import { collection, onSnapshot, query, doc, updateDoc, arrayUnion, arrayRemove, addDoc, orderBy, deleteDoc } from 'firebase/firestore';
 import { ref, uploadString, getDownloadURL } from 'firebase/storage';
 import { db, storage } from '../firebase';
 import { useAuth } from '../context/AuthContext';
@@ -89,6 +89,19 @@ export const Events: React.FC = () => {
     }
   };
 
+  const handleDeleteEvent = async (id: string, title: string) => {
+    if (!window.confirm(`Are you sure you want to delete "${title}"? This cannot be undone.`)) {
+      return;
+    }
+    try {
+      await deleteDoc(doc(db, 'events', id));
+      showToast(`Event deleted successfully`, 'success');
+    } catch (error) {
+      console.error("Failed to delete event:", error);
+      showToast('Failed to delete event', 'error');
+    }
+  };
+
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -162,6 +175,7 @@ export const Events: React.FC = () => {
         image: finalImageUrl,
         registeredBy: [],
         attendeesCount: 0,
+        createdBy: user?.uid || null,
         createdAt: new Date().toISOString()
       });
 
@@ -398,6 +412,17 @@ END:VCALENDAR`;
                     <span className="block font-display-lg text-lg font-black text-white leading-none">{day}</span>
                     <span className="block font-mono text-[8px] text-primary-container font-bold mt-1 tracking-wider">{month}</span>
                   </div>
+
+                  {/* Delete Button - Only show if current user created it, or for demo purposes if user is logged in */}
+                  {user && (evt.createdBy === user.uid || !evt.createdBy) && (
+                    <button 
+                      onClick={() => handleDeleteEvent(evt.id, evt.title)}
+                      className="absolute bottom-4 right-4 bg-red-500/80 hover:bg-red-500 text-white p-2 rounded-lg backdrop-blur-md transition-all shadow-[0_0_15px_rgba(239,68,68,0.3)] opacity-0 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0"
+                      title="Delete Event"
+                    >
+                      <span className="material-symbols-outlined text-[16px]">delete</span>
+                    </button>
+                  )}
                 </div>
 
                 {/* Event Details */}
@@ -432,13 +457,14 @@ END:VCALENDAR`;
                       </button>
                       <button
                         onClick={() => handleRegister(evt.id)}
-                        className={`px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest border transition-all ${
+                        className={`px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest border transition-all group/btn w-[120px] text-center ${
                           evt.isRegistered
-                            ? 'bg-primary-container/10 border-primary-container/40 text-primary-container shadow-[0_0_10px_rgba(0,240,255,0.1)]'
+                            ? 'bg-primary-container/10 border-primary-container/40 text-primary-container shadow-[0_0_10px_rgba(0,240,255,0.1)] hover:bg-red-500/20 hover:border-red-500/50 hover:text-red-400'
                             : 'btn-glass text-white'
                         }`}
                       >
-                        {evt.isRegistered ? 'REGISTERED' : 'REGISTER'}
+                        <span className="group-hover/btn:hidden">{evt.isRegistered ? 'REGISTERED' : 'REGISTER'}</span>
+                        <span className="hidden group-hover/btn:inline">{evt.isRegistered ? 'CANCEL' : 'REGISTER'}</span>
                       </button>
                     </div>
                   </div>
