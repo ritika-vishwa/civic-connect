@@ -5,9 +5,10 @@ import {
   onAuthStateChanged, 
   signOut as firebaseSignOut,
   GoogleAuthProvider,
-  signInWithPopup
+  signInWithPopup,
+  deleteUser
 } from 'firebase/auth';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, deleteDoc } from 'firebase/firestore';
 import { auth, db } from '../firebase';
 
 export type UserRole = 'citizen' | 'officer' | 'admin';
@@ -28,6 +29,7 @@ interface AuthContextProps {
   signup: (name: string, email: string, password: string, role: UserRole) => Promise<void>;
   loginWithGoogle: (role: UserRole) => Promise<void>;
   logout: () => void;
+  deleteAccount: () => Promise<void>;
   switchRole: (role: UserRole) => void;
 }
 
@@ -210,6 +212,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const deleteAccount = async () => {
+    if (auth.currentUser && user) {
+      try {
+        // Delete user doc from firestore
+        await deleteDoc(doc(db, 'users', user.uid));
+        // Delete user from auth
+        await deleteUser(auth.currentUser);
+        setUser(null);
+      } catch (error) {
+        console.error("Delete account failed:", error);
+        throw error;
+      }
+    }
+  };
+
   const switchRole = async (role: UserRole) => {
     // For UI preservation, update the Firestore document directly
     if (user) {
@@ -225,7 +242,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, signup, loginWithGoogle, logout, switchRole }}>
+    <AuthContext.Provider value={{ user, loading, login, signup, loginWithGoogle, logout, deleteAccount, switchRole }}>
       {children}
     </AuthContext.Provider>
   );

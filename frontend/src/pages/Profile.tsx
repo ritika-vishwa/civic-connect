@@ -6,7 +6,7 @@ import { GlassCard } from '../components/ui/GlassCard';
 import { IssueCard } from '../components/ui/IssueCard';
 
 export const Profile: React.FC = () => {
-  const { user, logout } = useAuth();
+  const { user, logout, deleteAccount } = useAuth();
   const { issues } = useIssues();
   const navigate = useNavigate();
 
@@ -14,6 +14,18 @@ export const Profile: React.FC = () => {
     logout();
     navigate('/');
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleDeleteAccount = async () => {
+    if (window.confirm("Are you sure you want to permanently delete your account? This action cannot be undone.")) {
+      try {
+        await deleteAccount();
+        navigate('/');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } catch (error) {
+        alert("Failed to delete account. Please try again.");
+      }
+    }
   };
 
   if (!user) return null;
@@ -40,13 +52,22 @@ export const Profile: React.FC = () => {
             Manage your network node permissions and inspect engagement history.
           </p>
         </div>
-        <button
-          onClick={handleLogout}
-          className="flex items-center gap-2 bg-error/10 hover:bg-error/20 text-error border border-error/30 px-4 py-2 rounded-xl font-label-caps text-xs tracking-widest uppercase transition-all cursor-pointer shadow-[0_0_15px_rgba(255,180,171,0.1)]"
-        >
-          <span className="material-symbols-outlined text-lg">logout</span>
-          Sign Out
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-2 bg-primary-container/10 hover:bg-primary-container/20 text-primary-container border border-primary-container/30 px-4 py-2 rounded-xl font-label-caps text-xs tracking-widest uppercase transition-all cursor-pointer shadow-[0_0_15px_rgba(0,240,255,0.1)]"
+          >
+            <span className="material-symbols-outlined text-lg">logout</span>
+            Log Out
+          </button>
+          <button
+            onClick={handleDeleteAccount}
+            className="flex items-center gap-2 bg-error/10 hover:bg-error/20 text-error border border-error/30 px-4 py-2 rounded-xl font-label-caps text-xs tracking-widest uppercase transition-all cursor-pointer shadow-[0_0_15px_rgba(255,180,171,0.1)]"
+          >
+            <span className="material-symbols-outlined text-lg">person_remove</span>
+            Sign out (Delete)
+          </button>
+        </div>
       </div>
 
       {/* User Details Panel */}
