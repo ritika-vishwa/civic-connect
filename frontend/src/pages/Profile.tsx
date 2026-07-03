@@ -1,15 +1,27 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useIssues } from '../context/IssueContext';
 import { GlassCard } from '../components/ui/GlassCard';
 import { IssueCard } from '../components/ui/IssueCard';
+import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import { db } from '../firebase';
 
 export const Profile: React.FC = () => {
   const { user, logout, deleteAccount } = useAuth();
   const { issues } = useIssues();
   const navigate = useNavigate();
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [myEvents, setMyEvents] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (!user) return;
+    const q = query(collection(db, 'events'), where('registeredBy', 'array-contains', user.uid));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      setMyEvents(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    });
+    return () => unsubscribe();
+  }, [user]);
 
   const handleLogout = () => {
     logout();
@@ -196,6 +208,50 @@ export const Profile: React.FC = () => {
           <GlassCard noHover className="p-8 text-center text-white/40 font-mono text-xs uppercase tracking-widest">
             <span className="material-symbols-outlined text-4xl block mb-2">assignment_turned_in</span>
             No active tickets filed under this profile.
+          </GlassCard>
+        )}
+      </div>
+
+      {/* My Event Registrations Feed */}
+      <div className="flex flex-col gap-6 mt-4">
+        <h3 className="font-display-lg text-xl font-black text-white uppercase tracking-tight flex items-center gap-3">
+          <span className="material-symbols-outlined text-purple-400 text-2xl drop-shadow-[0_0_8px_#c084fc]">event_available</span>
+          Event Registrations
+        </h3>
+        
+        {myEvents.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {myEvents.map((evt) => {
+              const eventDate = new Date(evt.date);
+              const day = eventDate.getDate();
+              const month = eventDate.toLocaleString(undefined, { month: 'short' }).toUpperCase();
+              return (
+                <GlassCard key={evt.id} noHover className="flex gap-4 p-4 border border-white/10 overflow-hidden relative">
+                  <div className="w-20 h-24 rounded-lg overflow-hidden shrink-0 border border-white/10 relative">
+                    <img src={evt.image} alt={evt.title} className="w-full h-full object-cover" />
+                    <div className="absolute inset-0 bg-[#031427]/80 flex flex-col items-center justify-center">
+                      <span className="font-display-lg text-xl font-black text-white leading-none">{day}</span>
+                      <span className="font-mono text-[9px] text-primary-container font-bold tracking-wider">{month}</span>
+                    </div>
+                  </div>
+                  <div className="flex flex-col justify-center flex-grow">
+                    <span className="text-[9px] font-bold tracking-widest text-purple-300 uppercase mb-1">{evt.category}</span>
+                    <h4 className="text-sm font-bold text-white uppercase tracking-tight leading-tight">{evt.title}</h4>
+                    <p className="text-[10px] font-mono text-white/50 mt-1 flex items-center gap-1">
+                      <span className="material-symbols-outlined text-[12px]">schedule</span> {evt.time}
+                    </p>
+                    <p className="text-[10px] font-mono text-white/50 mt-0.5 flex items-center gap-1">
+                      <span className="material-symbols-outlined text-[12px]">location_on</span> {evt.location}
+                    </p>
+                  </div>
+                </GlassCard>
+              );
+            })}
+          </div>
+        ) : (
+          <GlassCard noHover className="p-8 text-center text-white/40 font-mono text-xs uppercase tracking-widest">
+            <span className="material-symbols-outlined text-4xl block mb-2">event_busy</span>
+            No active event registrations found.
           </GlassCard>
         )}
       </div>

@@ -218,7 +218,7 @@ export const IssueProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       userRole: user.role,
       text: commentText,
       createdAt: new Date().toISOString(),
-      isOfficial: user.role === 'officer' || user.role === 'admin'
+      isOfficial: user.role === 'official' || user.role === 'admin'
     };
 
     await addDoc(collection(db, 'comments'), newComment);

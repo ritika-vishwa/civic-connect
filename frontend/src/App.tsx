@@ -97,7 +97,7 @@ export const App: React.FC = () => {
                 <Route path="/map" element={<Map />} />
                 <Route path="/issues/:id" element={<IssueDetails />} />
                 <Route path="/my-complaints" element={<MyComplaints />} />
-                <Route path="/officer" element={<RoleRoute allowedRoles={['officer', 'admin']}><OfficerWorkspace /></RoleRoute>} />
+                <Route path="/officer" element={<RoleRoute allowedRoles={['official', 'admin']}><OfficerWorkspace /></RoleRoute>} />
                 <Route path="/admin" element={<RoleRoute allowedRoles={['admin']}><AdminManagement /></RoleRoute>} />
                 <Route path="/settings" element={<Settings />} />
               </Route>
