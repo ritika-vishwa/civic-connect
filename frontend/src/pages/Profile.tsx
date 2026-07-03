@@ -4,6 +4,8 @@ import { useAuth } from '../context/AuthContext';
 import { useIssues } from '../context/IssueContext';
 import { GlassCard } from '../components/ui/GlassCard';
 import { IssueCard } from '../components/ui/IssueCard';
+import { ImageCropModal } from '../components/ui/ImageCropModal';
+import { ImageLightbox } from '../components/ui/ImageLightbox';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebase';
 
@@ -14,6 +16,8 @@ export const Profile: React.FC = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [myEvents, setMyEvents] = useState<any[]>([]);
   const [isUploading, setIsUploading] = useState(false);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [cropImageSrc, setCropImageSrc] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -42,36 +46,47 @@ export const Profile: React.FC = () => {
     }
   };
 
-  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAvatarSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file && user) {
-      if (file.size > 2 * 1024 * 1024) {
-        alert('Image must be less than 2MB');
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        alert('Image must be less than 5MB');
         return;
       }
-      setIsUploading(true);
-      setIsUploading(true);
-      const formData = new FormData();
-      formData.append('image', file);
+      const reader = new FileReader();
+      reader.onload = () => {
+        setCropImageSrc(reader.result as string);
+      };
+      reader.onerror = () => {
+        alert('Failed to read file.');
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
-      try {
-        const response = await fetch('http://localhost:3001/api/upload', {
-          method: 'POST',
-          body: formData,
-        });
+  const handleCropComplete = async (croppedFile: File) => {
+    setCropImageSrc(null);
+    setIsUploading(true);
+    const formData = new FormData();
+    formData.append('image', croppedFile);
 
-        if (!response.ok) {
-          throw new Error('Upload failed');
-        }
+    try {
+      const response = await fetch('http://localhost:3001/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
 
-        const data = await response.json();
-        await updateUserAvatar(data.url);
-      } catch (error) {
-        console.error("Avatar upload failed:", error);
-        alert('Failed to upload avatar. Please try again.');
-      } finally {
-        setIsUploading(false);
+      if (!response.ok) {
+        throw new Error('Upload failed');
       }
+
+      const data = await response.json();
+      await updateUserAvatar(data.url);
+    } catch (error) {
+      console.error("Avatar upload failed:", error);
+      alert('Failed to upload avatar. Please try again.');
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -133,17 +148,27 @@ export const Profile: React.FC = () => {
                 <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
               </div>
               
-              <label className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 backdrop-blur-sm transition-all rounded-2xl flex flex-col items-center justify-center cursor-pointer border border-primary-container border-dashed">
+              <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 backdrop-blur-sm transition-all rounded-2xl flex flex-col items-center justify-center border border-primary-container border-dashed overflow-hidden">
                 {isUploading ? (
                   <span className="material-symbols-outlined text-primary-container text-2xl animate-spin">progress_activity</span>
                 ) : (
                   <>
-                    <span className="material-symbols-outlined text-primary-container text-2xl">add_a_photo</span>
-                    <span className="text-[8px] font-bold uppercase tracking-widest text-primary-container mt-1">Upload</span>
+                    <button 
+                      onClick={() => setLightboxOpen(true)}
+                      className="flex-1 flex flex-col items-center justify-center w-full hover:bg-white/10 transition-colors"
+                    >
+                      <span className="material-symbols-outlined text-primary-container text-xl">visibility</span>
+                      <span className="text-[8px] font-bold uppercase tracking-widest text-primary-container mt-1">View</span>
+                    </button>
+                    <div className="w-full h-[1px] bg-white/20"></div>
+                    <label className="flex-1 flex flex-col items-center justify-center w-full hover:bg-white/10 transition-colors cursor-pointer">
+                      <span className="material-symbols-outlined text-primary-container text-xl">add_a_photo</span>
+                      <span className="text-[8px] font-bold uppercase tracking-widest text-primary-container mt-1">Upload</span>
+                      <input type="file" accept="image/*" className="hidden" onChange={handleAvatarSelect} disabled={isUploading} />
+                    </label>
                   </>
                 )}
-                <input type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} disabled={isUploading} />
-              </label>
+              </div>
             </div>
             
             <h3 className="text-lg font-bold text-white uppercase tracking-wider">{user.name}</h3>
@@ -342,6 +367,20 @@ export const Profile: React.FC = () => {
         </div>
       )}
 
+      {cropImageSrc && (
+        <ImageCropModal 
+          imageSrc={cropImageSrc} 
+          onClose={() => setCropImageSrc(null)} 
+          onCropComplete={handleCropComplete} 
+        />
+      )}
+      
+      {lightboxOpen && (
+        <ImageLightbox 
+          imageSrc={user.avatar} 
+          onClose={() => setLightboxOpen(false)} 
+        />
+      )}
     </div>
   );
 };
