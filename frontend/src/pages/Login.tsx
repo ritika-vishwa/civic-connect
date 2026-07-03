@@ -7,6 +7,7 @@ export const Login: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
+  const [locality, setLocality] = useState('');
   const [role, setRole] = useState<UserRole>('citizen');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
@@ -30,7 +31,7 @@ export const Login: React.FC = () => {
     setIsSubmitting(true);
     try {
       if (isSignUp) {
-        await signup(name, email, password, role);
+        await signup(name, email, password, role, locality);
         showToast('Account created successfully!', 'success');
       } else {
         await login(email, password, role);
@@ -167,6 +168,21 @@ export const Login: React.FC = () => {
             </div>
           )}
 
+          {isSignUp && (
+            <div className="relative animate-fade-in-up" style={{ animationDelay: '0.1s', animationDuration: '0.3s' }}>
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <span className="material-symbols-outlined text-white/40 text-[18px]">location_on</span>
+              </div>
+              <input
+                type="text"
+                value={locality}
+                onChange={(e) => setLocality(e.target.value)}
+                placeholder="Locality (e.g. Downtown)"
+                className="w-full bg-[#1A1B23] border border-white/5 rounded-xl py-3.5 pl-11 pr-4 text-sm text-white placeholder-white/30 focus:outline-none focus:border-indigo-500/50 transition-colors"
+              />
+            </div>
+          )}
+
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
               <span className="material-symbols-outlined text-white/40 text-[18px]">mail</span>
@@ -206,7 +222,7 @@ export const Login: React.FC = () => {
 
           {/* Role Selector (Subtle) */}
           <div className="flex bg-[#1A1B23] border border-white/5 rounded-xl overflow-hidden p-1">
-            {(['citizen', 'officer', 'admin'] as UserRole[]).map((r) => (
+            {(['citizen', 'official', 'moderator', 'admin'] as UserRole[]).map((r) => (
               <button
                 key={r}
                 type="button"

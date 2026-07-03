@@ -40,6 +40,9 @@ export const Profile: React.FC = () => {
   const reportsCount = myIssues.length;
   const totalEndorsements = myIssues.reduce((acc, curr) => acc + curr.supportCount, 0);
   const resolvedCount = myIssues.filter((i) => i.status === 'Resolved').length;
+  
+  // Basic heuristic for community participation points
+  const participationScore = reportsCount * 15 + totalEndorsements * 5 + resolvedCount * 25;
 
   return (
     <div className="flex flex-col gap-8 w-full">
@@ -90,6 +93,12 @@ export const Profile: React.FC = () => {
                 Dept: {user.department}
               </p>
             )}
+            {user.locality && (
+              <p className="text-[10px] font-mono text-blue-300 uppercase mt-0.5 flex items-center justify-center gap-1">
+                <span className="material-symbols-outlined text-[12px]">location_on</span>
+                {user.locality}
+              </p>
+            )}
 
             <div className="w-full border-t border-white/10 my-6 pt-6 flex flex-col gap-3 font-mono text-[10px] uppercase text-white/50 tracking-wider">
               <div className="flex justify-between">
@@ -110,27 +119,34 @@ export const Profile: React.FC = () => {
 
         {/* Engagement Statistics */}
         <div className="col-span-1 lg:col-span-8 flex flex-col gap-gutter animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-gutter">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-gutter">
             
             {/* Stat 1 */}
-            <GlassCard noHover className="p-6 flex flex-col justify-between">
-              <span className="font-label-caps text-[9px] text-white/40 uppercase tracking-widest font-mono">Reports Filed</span>
-              <h4 className="text-3xl font-black text-white font-display-lg mt-2">{reportsCount}</h4>
-              <span className="text-[9px] font-mono text-primary-container mt-1 uppercase">Civic Submissions</span>
+            <GlassCard noHover className="p-4 sm:p-6 flex flex-col justify-between">
+              <span className="font-label-caps text-[9px] text-white/40 uppercase tracking-widest font-mono">Reports</span>
+              <h4 className="text-2xl sm:text-3xl font-black text-white font-display-lg mt-2">{reportsCount}</h4>
+              <span className="text-[8px] sm:text-[9px] font-mono text-primary-container mt-1 uppercase">Filed</span>
             </GlassCard>
 
             {/* Stat 2 */}
-            <GlassCard noHover className="p-6 flex flex-col justify-between">
-              <span className="font-label-caps text-[9px] text-white/40 uppercase tracking-widest font-mono">Endorsements</span>
-              <h4 className="text-3xl font-black text-white font-display-lg mt-2">{totalEndorsements}</h4>
-              <span className="text-[9px] font-mono text-purple-300 mt-1 uppercase">Support Votes</span>
+            <GlassCard noHover className="p-4 sm:p-6 flex flex-col justify-between">
+              <span className="font-label-caps text-[9px] text-white/40 uppercase tracking-widest font-mono">Endorsed</span>
+              <h4 className="text-2xl sm:text-3xl font-black text-white font-display-lg mt-2">{totalEndorsements}</h4>
+              <span className="text-[8px] sm:text-[9px] font-mono text-purple-300 mt-1 uppercase">Support Votes</span>
             </GlassCard>
 
             {/* Stat 3 */}
-            <GlassCard noHover className="p-6 flex flex-col justify-between">
-              <span className="font-label-caps text-[9px] text-white/40 uppercase tracking-widest font-mono">Resolved tickets</span>
-              <h4 className="text-3xl font-black text-white font-display-lg mt-2">{resolvedCount}</h4>
-              <span className="text-[9px] font-mono text-green-400 mt-1 uppercase">Resolution rate</span>
+            <GlassCard noHover className="p-4 sm:p-6 flex flex-col justify-between">
+              <span className="font-label-caps text-[9px] text-white/40 uppercase tracking-widest font-mono">Resolved</span>
+              <h4 className="text-2xl sm:text-3xl font-black text-white font-display-lg mt-2">{resolvedCount}</h4>
+              <span className="text-[8px] sm:text-[9px] font-mono text-green-400 mt-1 uppercase">Tickets</span>
+            </GlassCard>
+
+            {/* Stat 4 */}
+            <GlassCard noHover className="p-4 sm:p-6 flex flex-col justify-between">
+              <span className="font-label-caps text-[9px] text-white/40 uppercase tracking-widest font-mono">Impact</span>
+              <h4 className="text-2xl sm:text-3xl font-black text-white font-display-lg mt-2">{participationScore}</h4>
+              <span className="text-[8px] sm:text-[9px] font-mono text-yellow-400 mt-1 uppercase">Community Pts</span>
             </GlassCard>
 
           </div>

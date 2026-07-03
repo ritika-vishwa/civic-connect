@@ -11,7 +11,7 @@ import {
 import { doc, getDoc, setDoc, deleteDoc } from 'firebase/firestore';
 import { auth, db } from '../firebase';
 
-export type UserRole = 'citizen' | 'officer' | 'admin';
+export type UserRole = 'citizen' | 'official' | 'moderator' | 'admin';
 
 export interface User {
   uid: string;
@@ -19,6 +19,7 @@ export interface User {
   email: string;
   role: UserRole;
   department?: string;
+  locality?: string;
   avatar: string;
 }
 
@@ -26,7 +27,7 @@ interface AuthContextProps {
   user: User | null;
   loading: boolean;
   login: (email: string, password: string, role: UserRole) => Promise<void>;
-  signup: (name: string, email: string, password: string, role: UserRole) => Promise<void>;
+  signup: (name: string, email: string, password: string, role: UserRole, locality?: string) => Promise<void>;
   loginWithGoogle: (role: UserRole) => Promise<void>;
   logout: () => void;
   deleteAccount: () => Promise<void>;
@@ -39,15 +40,24 @@ const AuthContext = createContext<AuthContextProps | undefined>(undefined);
 const FALLBACK_PROFILES: Record<UserRole, Partial<User>> = {
   citizen: {
     name: 'Citizen User',
+    locality: 'Downtown District',
     avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=120'
   },
-  officer: {
-    name: 'Officer User',
+  official: {
+    name: 'Municipal Official',
     department: 'Public Works',
+    locality: 'City Hall',
     avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=120'
+  },
+  moderator: {
+    name: 'Community Moderator',
+    locality: 'Northside Community',
+    avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=120'
   },
   admin: {
     name: 'Admin User',
+    department: 'System Administration',
+    locality: 'City Hall',
     avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=120'
   }
 };
@@ -133,7 +143,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             role: role,
             name: profile.name || 'User',
             avatar: profile.avatar || '',
-            ...(profile.department && { department: profile.department })
+            ...(profile.department && { department: profile.department }),
+            ...(profile.locality && { locality: profile.locality })
           };
           
           await setDoc(doc(db, 'users', newUser.uid), userDoc);
@@ -150,7 +161,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const signup = async (name: string, email: string, password: string, role: UserRole) => {
+  const signup = async (name: string, email: string, password: string, role: UserRole, locality?: string) => {
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const newUser = userCredential.user;
@@ -162,6 +173,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         role: role,
         name: name.trim() || profile.name || 'User',
         avatar: profile.avatar || '',
+        locality: locality?.trim() || profile.locality || 'Unknown Locality',
         ...(profile.department && { department: profile.department })
       };
       
@@ -189,7 +201,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           role: role,
           name: userCredential.user.displayName || profile.name || 'User',
           avatar: userCredential.user.photoURL || profile.avatar || '',
-          ...(profile.department && { department: profile.department })
+          ...(profile.department && { department: profile.department }),
+          ...(profile.locality && { locality: profile.locality })
         };
         await setDoc(userDocRef, userDoc);
         setUser(userDoc);
