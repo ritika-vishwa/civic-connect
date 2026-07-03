@@ -25,7 +25,7 @@ interface AuthContextProps {
   user: User | null;
   loading: boolean;
   login: (email: string, password: string, role: UserRole) => Promise<void>;
-  signup: (email: string, password: string, role: UserRole) => Promise<void>;
+  signup: (name: string, email: string, password: string, role: UserRole) => Promise<void>;
   loginWithGoogle: (role: UserRole) => Promise<void>;
   logout: () => void;
   switchRole: (role: UserRole) => void;
@@ -148,7 +148,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const signup = async (email: string, password: string, role: UserRole) => {
+  const signup = async (name: string, email: string, password: string, role: UserRole) => {
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const newUser = userCredential.user;
@@ -158,7 +158,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         uid: newUser.uid,
         email: email,
         role: role,
-        name: profile.name || 'User',
+        name: name.trim() || profile.name || 'User',
         avatar: profile.avatar || '',
         ...(profile.department && { department: profile.department })
       };
