@@ -6,6 +6,7 @@ import { useNotification } from '../context/NotificationContext';
 export const Login: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
   const [role, setRole] = useState<UserRole>('citizen');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
@@ -17,6 +18,10 @@ export const Login: React.FC = () => {
 
   const handleAuth = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
+    if (isSignUp && !name.trim()) {
+      showToast('Please enter a username', 'error');
+      return;
+    }
     if (!email.trim() || !password.trim()) {
       showToast('Please enter both email and password', 'error');
       return;
@@ -25,13 +30,13 @@ export const Login: React.FC = () => {
     setIsSubmitting(true);
     try {
       if (isSignUp) {
-        await signup(email, password, role);
+        await signup(name, email, password, role);
         showToast('Account created successfully!', 'success');
       } else {
         await login(email, password, role);
         showToast(`Welcome back! Logged in as ${role.toUpperCase()}`, 'success');
       }
-      navigate('/');
+      navigate('/dashboard');
     } catch (err: any) {
       if (err.code === 'auth/email-already-in-use') {
         showToast('Email already in use. Please sign in instead.', 'error');
@@ -49,7 +54,7 @@ export const Login: React.FC = () => {
     try {
       await loginWithGoogle(role);
       showToast('Successfully logged in with Google', 'success');
-      navigate('/');
+      navigate('/dashboard');
     } catch (err) {
       showToast('Google authentication failed.', 'error');
     }
@@ -64,7 +69,7 @@ export const Login: React.FC = () => {
     try {
       await login('citizen@demo.com', 'demo123', 'citizen');
       showToast('Demo login successful', 'success');
-      navigate('/');
+      navigate('/dashboard');
     } catch (err) {
       showToast('Demo login failed', 'error');
     } finally {
@@ -146,6 +151,22 @@ export const Login: React.FC = () => {
         {/* Email/Password Form */}
         <form onSubmit={handleAuth} className="w-full flex flex-col gap-4">
           
+          {isSignUp && (
+            <div className="relative animate-fade-in-up" style={{ animationDuration: '0.3s' }}>
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <span className="material-symbols-outlined text-white/40 text-[18px]">person</span>
+              </div>
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Username"
+                className="w-full bg-[#1A1B23] border border-white/5 rounded-xl py-3.5 pl-11 pr-4 text-sm text-white placeholder-white/30 focus:outline-none focus:border-indigo-500/50 transition-colors"
+                required={isSignUp}
+              />
+            </div>
+          )}
+
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
               <span className="material-symbols-outlined text-white/40 text-[18px]">mail</span>
