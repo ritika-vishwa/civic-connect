@@ -139,7 +139,7 @@ export const ReportIssue: React.FC = () => {
             const data = JSON.parse(jsonMatch[0]);
             setTitle(data.title || title);
             setDescription(data.description || description);
-            showToast('AI optimization complete (client fallback)!', 'success');
+            showToast('AI optimization complete!', 'success');
           } else {
             throw new Error("Invalid AI response format");
           }
@@ -243,7 +243,7 @@ export const ReportIssue: React.FC = () => {
               department: aiData.department || 'Urban Operations',
               confidence: aiData.confidence || 0.95
             }));
-            showToast('AI successfully analyzed image (client fallback)', 'success');
+            showToast('AI successfully extracted issue details from image', 'success');
           } else {
             throw new Error("Invalid format from client-side Gemini");
           }
