@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useIssues } from '../../context/IssueContext';
 import { useAuth, UserRole } from '../../context/AuthContext';
@@ -8,9 +8,15 @@ export const CommandPalette: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState('');
   const navigate = useNavigate();
+  const location = useLocation();
   const { issues } = useIssues();
   const { user } = useAuth();
   const isDev = import.meta.env.DEV;
+
+  // Auto-close when the route changes (e.g. clicking a background nav link)
+  useEffect(() => {
+    setIsOpen(false);
+  }, [location.pathname]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -99,7 +105,7 @@ export const CommandPalette: React.FC = () => {
 
       <AnimatePresence>
         {isOpen && (
-          <div className="fixed inset-0 z-50 flex items-start justify-center pt-24 px-4 overflow-y-auto">
+          <div className="fixed inset-0 z-[100] flex items-start justify-center pt-24 px-4 overflow-y-auto">
             {/* Backdrop */}
             <motion.div
               initial={{ opacity: 0 }}
