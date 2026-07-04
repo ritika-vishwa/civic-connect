@@ -120,7 +120,7 @@ export const ReportIssue: React.FC = () => {
       if (apiKey) {
         try {
           const genAI = new GoogleGenerativeAI(apiKey);
-          const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+          const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
           const prompt = `Optimize this civic issue report. Rewrite the description to be formal and structured for city officials. Keep it concise.
           Title: ${title}
           Rough Description: ${description}
@@ -199,7 +199,7 @@ export const ReportIssue: React.FC = () => {
       if (apiKey) {
         try {
           const genAI = new GoogleGenerativeAI(apiKey);
-          const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+          const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
           
           const mimeType = base64Image.match(/data:(.*?);base64/)?.[1] || 'image/jpeg';
           const base64Data = base64Image.split(',')[1];
