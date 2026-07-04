@@ -136,7 +136,7 @@ export const Sidebar: React.FC = () => {
           href="#support"
           onClick={(e) => { 
             e.preventDefault(); 
-            window.dispatchEvent(new Event('open-command-palette'));
+            window.dispatchEvent(new Event('open-support-modal'));
           }}
           className="text-white/70 hover:text-white hover:bg-white/5 rounded-xl px-4 py-3 flex items-center gap-3 font-label-caps text-label-caps uppercase tracking-widest transition-all"
         >

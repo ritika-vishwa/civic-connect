@@ -84,7 +84,7 @@ export const CommandPalette: React.FC = () => {
         onClick={() => setIsOpen(true)}
         className="fixed bottom-6 left-6 z-40 hidden md:flex items-center justify-center w-10 h-10 rounded-full glass-card border border-white/10 text-white/50 hover:text-white hover:bg-white/10 transition-colors group shadow-lg cursor-pointer"
       >
-        <span className="material-symbols-outlined text-[20px]">search</span>
+        <span className="material-symbols-outlined text-[20px]">insights</span>
         
         {/* Hover Tooltip */}
         <div className="absolute left-14 bg-[#00060d] border border-white/20 px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none flex items-center gap-2 whitespace-nowrap shadow-xl">
@@ -106,7 +106,7 @@ export const CommandPalette: React.FC = () => {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsOpen(false)}
-              className="fixed inset-0 bg-[#000f21]/80 backdrop-blur-md"
+              className="fixed inset-0 bg-black/40 backdrop-blur-sm"
             />
 
             {/* Panel */}
@@ -115,7 +115,7 @@ export const CommandPalette: React.FC = () => {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.97, y: -10 }}
               transition={{ duration: 0.2 }}
-              className="relative w-full max-w-xl glass-card rounded-2xl border border-primary-container/40 shadow-[0_0_50px_rgba(0,240,255,0.25)] bg-[#031427]/90 overflow-hidden flex flex-col"
+              className="relative w-full max-w-xl glass-card rounded-2xl border border-primary-container/60 shadow-[0_0_80px_rgba(0,240,255,0.3)] bg-[#031427] overflow-hidden flex flex-col mt-10"
             >
               {/* Input */}
               <div className="flex items-center px-4 border-b border-white/10 py-3">

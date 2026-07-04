@@ -321,8 +321,8 @@ export const Community: React.FC = () => {
 
               {/* Image if any */}
               {post.image && (
-                <div className="w-full rounded-xl border border-white/10 mb-4 bg-black/40 overflow-hidden flex justify-center">
-                  <img src={post.image} alt={post.title} className="max-w-full max-h-[500px] object-contain" />
+                <div className="w-full rounded-xl border border-white/10 mb-4 bg-black/40 overflow-hidden flex justify-center aspect-video">
+                  <img src={post.image} alt={post.title} className="w-full h-full object-cover object-center" />
                 </div>
               )}
 

@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import authRoutes from './routes/auth';
 import aiRoutes from './routes/ai';
 import uploadRoutes from './routes/upload';
+import supportRoutes from './routes/support';
 import path from 'path';
 
 dotenv.config({ override: true });
@@ -23,6 +24,7 @@ app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 app.use('/api/auth', authRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/upload', uploadRoutes);
+app.use('/api/support', supportRoutes);
 
 // Health Check Endpoint
 app.get('/api/health', (req, res) => {

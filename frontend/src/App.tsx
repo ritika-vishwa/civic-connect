@@ -33,6 +33,7 @@ import { Settings } from './pages/Settings';
 
 // Global Utility
 import { CommandPalette } from './components/ui/CommandPalette';
+import { SupportModal } from './components/ui/SupportModal';
 
 // Protected Route Wrapper
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -80,6 +81,9 @@ export const App: React.FC = () => {
             
             {/* Global Command Palette search listener */}
             <CommandPalette />
+            
+            {/* Global Support Modal */}
+            <SupportModal />
 
             <Routes>
               {/* Public Routes */}
