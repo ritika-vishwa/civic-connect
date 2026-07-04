@@ -639,7 +639,7 @@ export const ReportIssue: React.FC = () => {
                       showToast('Geolocation is not supported', 'error');
                     }
                   }}
-                  className="absolute top-4 right-4 z-[400] bg-primary-container/20 hover:bg-primary-container/40 text-primary-container border border-primary-container/50 px-3 py-2 rounded-lg backdrop-blur-md flex items-center gap-2 cursor-pointer transition-colors shadow-[0_0_15px_rgba(0,240,255,0.3)]"
+                  className="absolute top-4 right-4 z-[400] bg-white hover:bg-gray-100 text-black border border-white/50 px-3 py-2 rounded-lg shadow-lg flex items-center gap-2 cursor-pointer transition-colors"
                 >
                   <span className="material-symbols-outlined text-[16px]">my_location</span>
                   <span className="text-[9px] font-bold uppercase tracking-widest font-mono">Locate Me</span>
