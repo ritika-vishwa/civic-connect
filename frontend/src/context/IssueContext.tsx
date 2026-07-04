@@ -166,7 +166,7 @@ export const IssueProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             const formData = new FormData();
             formData.append('image', blob, `issue-${Date.now()}.jpg`);
             
-            const uploadRes = await fetch('http://localhost:3001/api/upload', {
+            const uploadRes = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/upload`, {
               method: 'POST',
               body: formData
             });

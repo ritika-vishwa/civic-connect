@@ -97,7 +97,7 @@ export const ReportIssue: React.FC = () => {
     setIsAiAssisting(true);
 
     try {
-      const response = await fetch('http://localhost:3001/api/ai/assist', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/ai/assist`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -130,7 +130,7 @@ export const ReportIssue: React.FC = () => {
     showToast('AI analyzing image signature...', 'info');
 
     try {
-      const response = await fetch('http://localhost:3001/api/ai/analyze-image', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/ai/analyze-image`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

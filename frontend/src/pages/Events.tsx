@@ -142,7 +142,7 @@ export const Events: React.FC = () => {
     
     setIsGeneratingDesc(true);
     try {
-      const response = await fetch('http://localhost:3001/api/ai/generate-description', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/ai/generate-description`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ title: newTitle, category: newCategory, date: newDate, time: newTime, location: newLocation }),
@@ -178,7 +178,7 @@ export const Events: React.FC = () => {
         formData.append('image', selectedImageFile);
         
         try {
-          const response = await fetch('http://localhost:3001/api/upload', {
+          const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/upload`, {
             method: 'POST',
             body: formData
           });
