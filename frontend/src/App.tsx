@@ -34,6 +34,7 @@ import { Settings } from './pages/Settings';
 // Global Utility
 import { CommandPalette } from './components/ui/CommandPalette';
 import { SupportModal } from './components/ui/SupportModal';
+import { ThemeToggle } from './components/ui/ThemeToggle';
 
 // Protected Route Wrapper
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -84,6 +85,9 @@ export const App: React.FC = () => {
             
             {/* Global Support Modal */}
             <SupportModal />
+
+            {/* Global Theme Toggle */}
+            <ThemeToggle />
 
             <Routes>
               {/* Public Routes */}
