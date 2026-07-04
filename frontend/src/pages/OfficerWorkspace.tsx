@@ -15,19 +15,73 @@ export const OfficerWorkspace: React.FC = () => {
   const { user } = useAuth();
   const { showToast } = useNotification();
 
-  const [selectedIssueId, setSelectedIssueId] = useState<string | null>(issues[0]?.id || null);
+  // Helper to extract locality/sector from address
+  const getLocality = (address: string) => {
+    if (!address) return 'Downtown';
+    const sectorMatch = address.match(/Sector\s+\d+/i);
+    if (sectorMatch) return sectorMatch[0];
+    const commonNames = ['Downtown', 'Broadway', 'Central Park', 'Greenwood', 'Oakridge', 'Westside', 'Eastside'];
+    for (const name of commonNames) {
+      if (address.toLowerCase().includes(name.toLowerCase())) {
+        return name;
+      }
+    }
+    const firstSegment = address.split(',')[0].trim();
+    return firstSegment.length < 20 ? firstSegment : 'Downtown';
+  };
+
+  const calculatePriorityScore = (issue: Issue) => {
+    // 1. Severity (40%)
+    let severityScore = 10;
+    if (issue.severity === 'Critical') severityScore = 40;
+    else if (issue.severity === 'High') severityScore = 30;
+    else if (issue.severity === 'Medium') severityScore = 20;
+
+    // 2. Support Count (30%)
+    const supports = issue.supportedBy?.length || issue.supportCount || 0;
+    const supportScore = Math.min(30, supports * 5);
+
+    // 3. Locality Weight (15%)
+    let localityScore = 5;
+    const loc = getLocality(issue.location?.address || '');
+    if (['downtown', 'broadway'].includes(loc.toLowerCase())) {
+      localityScore = 15;
+    } else if (['sector 1', 'sector 3', 'central park'].includes(loc.toLowerCase())) {
+      localityScore = 10;
+    }
+
+    // 4. Proximity/Description Keywords (15%)
+    let keywordScore = 5;
+    const keywords = ['school', 'hospital', 'transit', 'station', 'highway', 'subway', 'metro', 'park', 'main road', 'traffic lights', 'clinic', 'emergency'];
+    const descLower = (issue.description || '').toLowerCase();
+    for (const kw of keywords) {
+      if (descLower.includes(kw)) {
+        keywordScore = 15;
+        break;
+      }
+    }
+
+    return {
+      total: severityScore + supportScore + localityScore + keywordScore,
+      breakdown: {
+        severity: severityScore,
+        support: supportScore,
+        locality: localityScore,
+        keyword: keywordScore
+      }
+    };
+  };
+
   // Filters logic — officers see only their department by default
   const defaultDept = user?.role === 'official' && user?.department ? user.department : 'All';
   const [filterDepartment, setFilterDepartment] = useState<string>(defaultDept);
+  const [sortBy, setSortBy] = useState<'priority' | 'newest' | 'severity' | 'support'>('priority');
 
   // Update inputs
   const [statusVal, setStatusVal] = useState<Issue['status']>('In Progress');
   const [updateText, setUpdateText] = useState('');
   const [resolutionImg, setResolutionImg] = useState('');
   const [workerName, setWorkerName] = useState('');
-
-  // Selected issue
-  const activeIssue = issues.find(i => i.id === selectedIssueId);
 
   // Departments list - officials are restricted to their own department
   const departments = user?.role === 'official' && user?.department 
@@ -47,6 +101,31 @@ export const OfficerWorkspace: React.FC = () => {
     const isNotClosed = issue.status !== 'Closed';
     return matchesDept && isNotClosed;
   });
+
+  const processedIssues = filtered.map(issue => ({
+    ...issue,
+    priorityInfo: calculatePriorityScore(issue)
+  })).sort((a, b) => {
+    if (sortBy === 'priority') {
+      return b.priorityInfo.total - a.priorityInfo.total;
+    }
+    if (sortBy === 'newest') {
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    }
+    if (sortBy === 'severity') {
+      const sevWeight = { Critical: 4, High: 3, Medium: 2, Low: 1 };
+      return (sevWeight[b.severity] || 0) - (sevWeight[a.severity] || 0);
+    }
+    if (sortBy === 'support') {
+      return (b.supportedBy?.length || b.supportCount || 0) - (a.supportedBy?.length || a.supportCount || 0);
+    }
+    return 0;
+  });
+
+  const [selectedIssueId, setSelectedIssueId] = useState<string | null>(null);
+
+  // Selected issue
+  const activeIssue = processedIssues.find(i => i.id === selectedIssueId) || processedIssues[0];
 
   const canUpdateActive = canUpdateIssueStatus(user, activeIssue);
   const canAssign = canAssignWorkers(user);
@@ -91,13 +170,28 @@ export const OfficerWorkspace: React.FC = () => {
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
-          <span className="text-[9px] font-mono text-white/40 uppercase">Department Queue:</span>
-          <CustomSelect
-            value={filterDepartment}
-            onChange={(val) => setFilterDepartment(val)}
-            options={departments}
-          />
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-2">
+            <span className="text-[9px] font-mono text-white/40 uppercase">Queue:</span>
+            <CustomSelect
+              value={filterDepartment}
+              onChange={(val) => setFilterDepartment(val)}
+              options={departments}
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-[9px] font-mono text-white/40 uppercase">Sort:</span>
+            <CustomSelect
+              value={sortBy}
+              onChange={(val) => setSortBy(val as any)}
+              options={[
+                { label: 'Smart Priority', value: 'priority' },
+                { label: 'Date Reported', value: 'newest' },
+                { label: 'Severity', value: 'severity' },
+                { label: 'Support Count', value: 'support' }
+              ]}
+            />
+          </div>
         </div>
       </div>
 
@@ -106,8 +200,8 @@ export const OfficerWorkspace: React.FC = () => {
         
         {/* Left Column: List of assigned issues (4 cols) */}
         <div className="col-span-1 lg:col-span-4 flex flex-col gap-4 max-h-[400px] lg:max-h-[calc(100vh-300px)] overflow-y-auto pr-1">
-          {filtered.map(issue => {
-            const isActive = issue.id === selectedIssueId;
+          {processedIssues.map(issue => {
+            const isActive = issue.id === activeIssue?.id;
             return (
               <div 
                 key={issue.id}
@@ -126,13 +220,17 @@ export const OfficerWorkspace: React.FC = () => {
                   <StatusBadge value={issue.severity} type="severity" />
                 </div>
                 <div className="flex justify-between items-center mt-1">
-                  <span className="text-[9px] font-mono text-primary-container font-black">{issue.id}</span>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[9px] font-mono text-primary-container font-black">{issue.id}</span>
+                    <span className="text-[9px] font-mono text-white/40">|</span>
+                    <span className="text-[9px] font-mono text-yellow-400 font-bold bg-yellow-500/10 px-1.5 py-0.5 rounded border border-yellow-500/20">★ {issue.priorityInfo.total} pts</span>
+                  </div>
                   <StatusBadge value={issue.status} type="status" />
                 </div>
               </div>
             );
           })}
-          {filtered.length === 0 && (
+          {processedIssues.length === 0 && (
             <div className="text-center py-10 font-mono text-[10px] text-white/40 uppercase border border-white/5 rounded-xl">
               No active assignments in this department.
             </div>
@@ -199,6 +297,61 @@ export const OfficerWorkspace: React.FC = () => {
                       Dispatch Worker
                     </button>
                   </form>
+                </GlassCard>
+
+                {/* Smart Priority Diagnostics Panel */}
+                <GlassCard noHover className="p-5 border-white/10 flex flex-col gap-3.5">
+                  <div className="flex justify-between items-center border-b border-white/5 pb-2">
+                    <h4 className="font-mono text-[10px] uppercase text-primary-container font-bold flex items-center gap-1.5">
+                      <span className="material-symbols-outlined text-xs">analytics</span>
+                      Smart Priority Diagnostics
+                    </h4>
+                    <span className="font-mono text-xs font-black text-yellow-400 bg-yellow-500/10 px-2 py-0.5 rounded border border-yellow-500/30 animate-pulse">
+                      ★ {activeIssue.priorityInfo.total} Pts
+                    </span>
+                  </div>
+                  
+                  <div className="flex flex-col gap-2.5 font-mono text-[10px] text-white/70">
+                    <div className="flex flex-col gap-1">
+                      <div className="flex justify-between">
+                        <span>Severity (40% max):</span>
+                        <span className="text-white font-bold">{activeIssue.priorityInfo.breakdown.severity} pts</span>
+                      </div>
+                      <div className="w-full bg-white/5 rounded-full h-1 overflow-hidden">
+                        <div className="bg-red-400 h-full rounded-full" style={{ width: `${(activeIssue.priorityInfo.breakdown.severity / 40) * 100}%` }}></div>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col gap-1">
+                      <div className="flex justify-between">
+                        <span>Citizen Endorsements (30%):</span>
+                        <span className="text-white font-bold">{activeIssue.priorityInfo.breakdown.support} pts</span>
+                      </div>
+                      <div className="w-full bg-white/5 rounded-full h-1 overflow-hidden">
+                        <div className="bg-blue-400 h-full rounded-full" style={{ width: `${(activeIssue.priorityInfo.breakdown.support / 30) * 100}%` }}></div>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col gap-1">
+                      <div className="flex justify-between">
+                        <span>Locality Density (15%):</span>
+                        <span className="text-white font-bold">{activeIssue.priorityInfo.breakdown.locality} pts</span>
+                      </div>
+                      <div className="w-full bg-white/5 rounded-full h-1 overflow-hidden">
+                        <div className="bg-yellow-400 h-full rounded-full" style={{ width: `${(activeIssue.priorityInfo.breakdown.locality / 15) * 100}%` }}></div>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col gap-1">
+                      <div className="flex justify-between">
+                        <span>Public Proximity (15%):</span>
+                        <span className="text-white font-bold">{activeIssue.priorityInfo.breakdown.keyword} pts</span>
+                      </div>
+                      <div className="w-full bg-white/5 rounded-full h-1 overflow-hidden">
+                        <div className="bg-green-400 h-full rounded-full" style={{ width: `${(activeIssue.priorityInfo.breakdown.keyword / 15) * 100}%` }}></div>
+                      </div>
+                    </div>
+                  </div>
                 </GlassCard>
               </div>
 
