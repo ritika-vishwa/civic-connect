@@ -206,10 +206,10 @@ export const Community: React.FC = () => {
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-white/10 pb-6 animate-fade-in-up">
         <div>
           <h1 className="font-display-lg text-4xl md:text-5xl font-black text-white uppercase tracking-tight drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]">
-            Community Feed
+            Community Discussions & Engagement
           </h1>
           <p className="text-primary-container/80 font-mono text-sm mt-2 uppercase tracking-widest">
-            Citizen noticeboard and municipal announcements.
+            Neighborhood Discussions: share suggestions, ask questions, and discuss local concerns.
           </p>
         </div>
         
@@ -220,7 +220,7 @@ export const Community: React.FC = () => {
             className="primary-btn rounded-xl py-3 px-5 text-xs font-bold uppercase tracking-widest flex items-center justify-center gap-2"
           >
             <span className="material-symbols-outlined text-[16px]">rate_review</span>
-            {showForm ? 'Close Editor' : 'Publish Notice'}
+            {showForm ? 'Close Editor' : 'Start Discussion'}
           </button>
         )}
       </div>
@@ -230,7 +230,7 @@ export const Community: React.FC = () => {
         <div className="animate-fade-in-up">
           <GlassCard noHover className="p-6 border border-primary-container/40">
             <form onSubmit={handleCreatePost} className="flex flex-col gap-4">
-              <h3 className="font-display-lg text-lg font-bold text-white uppercase tracking-tight">Create Community Post</h3>
+              <h3 className="font-display-lg text-lg font-bold text-white uppercase tracking-tight">Start a Neighborhood Discussion</h3>
               <div className="flex flex-col gap-1">
                 <input
                   type="text"
