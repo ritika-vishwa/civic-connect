@@ -465,7 +465,7 @@ export const Landing: React.FC = () => {
                 </div>
               </div>
               <div className="lg:w-1/2 w-full mt-4 lg:mt-0">
-                <div className="w-full h-64 sm:h-80 bg-[#00060d]/90 rounded-2xl sm:rounded-3xl border border-primary-container/20 flex items-end p-4 sm:p-8 gap-2 sm:gap-4 backdrop-blur-xl relative shadow-2xl overflow-hidden group">
+                <div className="w-full h-64 sm:h-80 bg-[#00060d]/90 rounded-2xl sm:rounded-3xl border border-primary-container/20 flex items-end px-4 pb-4 pt-14 sm:px-8 sm:pb-8 sm:pt-16 gap-2 sm:gap-4 backdrop-blur-xl relative shadow-2xl overflow-hidden group">
                   <div className="absolute inset-0 bg-gradient-to-t from-primary-container/10 to-transparent"></div>
                   <div className="absolute top-4 right-4 sm:top-6 sm:right-6 bg-[#00060d] px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg border border-primary-container/50 backdrop-blur-md flex items-center gap-2 shadow-[0_0_20px_rgba(0,240,255,0.2)] z-10">
                     <span className="w-2 h-2 rounded-full bg-primary-container animate-pulse shadow-[0_0_10px_#00f0ff]"></span>
