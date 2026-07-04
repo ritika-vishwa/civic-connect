@@ -446,13 +446,13 @@ export const Landing: React.FC = () => {
         {/* ── Real-Time Civic Pulse ────────────────────────────────────── */}
         <section className="px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto mb-24 w-full">
           <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-100px' }} variants={sectionVariants}
-            className="bg-[#031427]/80 backdrop-blur-xl rounded-[2.5rem] p-8 md:p-16 relative overflow-hidden border border-primary-container/30 hover:shadow-[0_0_80px_rgba(0,240,255,0.15)] transition-shadow duration-700">
+            className="bg-[#031427]/80 backdrop-blur-xl rounded-[2rem] md:rounded-[2.5rem] p-6 md:p-16 relative overflow-hidden border border-primary-container/30 hover:shadow-[0_0_80px_rgba(0,240,255,0.15)] transition-shadow duration-700 w-full">
             <div className="absolute inset-0 bg-[linear-gradient(rgba(0,240,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(0,240,255,0.03)_1px,transparent_1px)] bg-[size:50px_50px] opacity-40" />
-            <div className="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-16">
-              <div className="lg:w-1/2">
-                <h2 className="font-display-lg text-4xl md:text-6xl mb-6 text-white font-black uppercase tracking-tight">Real-Time Civic Pulse</h2>
-                <p className="font-body-lg text-lg text-on-surface-variant mb-12 font-light leading-relaxed max-w-xl">Monitor the health and activity of your district with granular, live telemetry. Every complaint, every resolution — tracked.</p>
-                <div className="flex items-center gap-12">
+            <div className="relative z-10 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-12 lg:gap-16 w-full">
+              <div className="lg:w-1/2 w-full">
+                <h2 className="font-display-lg text-3xl sm:text-4xl md:text-6xl mb-6 text-white font-black uppercase tracking-tight leading-tight break-words">Real-Time Civic Pulse</h2>
+                <p className="font-body-lg text-base sm:text-lg text-on-surface-variant mb-10 font-light leading-relaxed max-w-xl">Monitor the health and activity of your district with granular, live telemetry. Every complaint, every resolution — tracked.</p>
+                <div className="flex flex-row items-center gap-6 sm:gap-12 w-full flex-wrap">
                   <div>
                     <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="font-display-lg text-5xl text-primary-container drop-shadow-[0_0_20px_rgba(0,240,255,0.6)] font-black">84%</motion.div>
                     <div className="font-label-caps text-[11px] mt-3 tracking-widest text-white uppercase font-bold">Resolution Rate</div>
@@ -464,17 +464,17 @@ export const Landing: React.FC = () => {
                   </div>
                 </div>
               </div>
-              <div className="lg:w-1/2 w-full">
-                <div className="w-full h-80 bg-[#00060d]/90 rounded-3xl border border-primary-container/20 flex items-end p-8 gap-4 backdrop-blur-xl relative shadow-2xl overflow-hidden group">
+              <div className="lg:w-1/2 w-full mt-4 lg:mt-0">
+                <div className="w-full h-64 sm:h-80 bg-[#00060d]/90 rounded-2xl sm:rounded-3xl border border-primary-container/20 flex items-end p-4 sm:p-8 gap-2 sm:gap-4 backdrop-blur-xl relative shadow-2xl overflow-hidden group">
                   <div className="absolute inset-0 bg-gradient-to-t from-primary-container/10 to-transparent"></div>
-                  <div className="absolute top-6 right-6 bg-[#00060d] px-4 py-2 rounded-lg border border-primary-container/50 backdrop-blur-md flex items-center gap-2 shadow-[0_0_20px_rgba(0,240,255,0.2)] z-10">
+                  <div className="absolute top-4 right-4 sm:top-6 sm:right-6 bg-[#00060d] px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg border border-primary-container/50 backdrop-blur-md flex items-center gap-2 shadow-[0_0_20px_rgba(0,240,255,0.2)] z-10">
                     <span className="w-2 h-2 rounded-full bg-primary-container animate-pulse shadow-[0_0_10px_#00f0ff]"></span>
-                    <span className="text-[11px] text-primary-container font-mono uppercase tracking-widest font-bold">Live Pulse</span>
+                    <span className="text-[10px] sm:text-[11px] text-primary-container font-mono uppercase tracking-widest font-bold">Live Pulse</span>
                   </div>
                   {[30, 50, 80, 40, 60, 100, 70].map((height, i) => (
-                    <motion.div key={i} initial={{ height: 0 }} whileInView={{ height: `${height}%` }} transition={{ duration: 1, delay: i * 0.1, type: 'spring' }}
+                    <motion.div key={i} initial={{ height: 0 }} whileInView={{ height: `${height}%` }} transition={{ duration: 1, delay: i * 0.1, ease: 'easeOut' }}
                       className={`flex-1 rounded-t-lg transition-colors duration-300 relative z-10 ${height === 100 ? 'bg-primary-container/50 border-t-2 border-primary-container hover:bg-primary-container/70 shadow-[0_0_40px_rgba(0,240,255,0.5)] cursor-pointer' : height === 80 ? 'bg-[#0088ff]/50 border-t-2 border-[#0088ff] hover:bg-[#0088ff]/70 shadow-[0_0_30px_rgba(0,136,255,0.4)] cursor-pointer' : 'bg-white/10 hover:bg-white/30 cursor-pointer'}`}>
-                      {height === 100 && <div className="absolute -top-12 left-1/2 -translate-x-1/2 bg-[#00060d] px-3 py-1.5 rounded-lg text-[9px] uppercase tracking-widest text-primary-container border border-primary-container/50 opacity-0 group-hover:opacity-100 transition-opacity font-bold shadow-[0_0_15px_rgba(0,240,255,0.4)]">Peak</div>}
+                      {height === 100 && <div className="absolute -top-10 sm:-top-12 left-1/2 -translate-x-1/2 bg-[#00060d] px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-[8px] sm:text-[9px] uppercase tracking-widest text-primary-container border border-primary-container/50 opacity-0 group-hover:opacity-100 transition-opacity font-bold shadow-[0_0_15px_rgba(0,240,255,0.4)]">Peak</div>}
                     </motion.div>
                   ))}
                 </div>
@@ -488,8 +488,8 @@ export const Landing: React.FC = () => {
           <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-80px' }} variants={sectionVariants}
             className="relative overflow-hidden rounded-[2.5rem] p-12 md:p-20 text-center border border-primary-container/30 bg-gradient-to-br from-[#031427] via-[#001a33] to-[#031427]">
             {/* Animated blobs */}
-            <motion.div animate={{ scale: [1, 1.3, 1], opacity: [0.3, 0.5, 0.3] }} transition={{ duration: 5, repeat: Infinity }} className="absolute top-[-30%] left-[-10%] w-[50%] h-[200%] bg-primary-container/20 rounded-full blur-[100px] pointer-events-none" />
-            <motion.div animate={{ scale: [1, 1.2, 1], opacity: [0.2, 0.4, 0.2] }} transition={{ duration: 7, repeat: Infinity, delay: 1 }} className="absolute bottom-[-30%] right-[-10%] w-[50%] h-[200%] bg-[#0088ff]/20 rounded-full blur-[100px] pointer-events-none" />
+            <motion.div animate={{ scale: [1, 1.3, 1], opacity: [0.3, 0.5, 0.3] }} transition={{ duration: 5, repeat: Infinity }} className="hidden sm:block absolute top-[-30%] left-[-10%] w-[50%] h-[200%] bg-primary-container/20 rounded-full blur-[100px] pointer-events-none" />
+            <motion.div animate={{ scale: [1, 1.2, 1], opacity: [0.2, 0.4, 0.2] }} transition={{ duration: 7, repeat: Infinity, delay: 1 }} className="hidden sm:block absolute bottom-[-30%] right-[-10%] w-[50%] h-[200%] bg-[#0088ff]/20 rounded-full blur-[100px] pointer-events-none" />
             <div className="relative z-10 flex flex-col items-center gap-8">
               <span className="font-label-caps text-[11px] tracking-widest text-primary-container uppercase border border-primary-container/30 px-4 py-1.5 rounded-full">Join the Movement</span>
               <h2 className="font-display-lg text-4xl md:text-6xl font-black uppercase tracking-tight text-white max-w-3xl">Your City Needs <span className="text-primary-container drop-shadow-[0_0_20px_rgba(0,240,255,0.5)]">Your Voice</span></h2>
