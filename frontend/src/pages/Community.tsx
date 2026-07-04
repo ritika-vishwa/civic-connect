@@ -52,7 +52,7 @@ export const Community: React.FC = () => {
   const { user } = useAuth();
   const { showToast } = useNotification();
 
-  const canPost = canParticipateInDiscussions(user);
+  const canPost = canParticipateInDiscussions(user) && user?.role !== 'official';
   const canUpvote = canSupportIssue(user);
   const canModerate = canModerateContent(user);
   const canDeletePost = canDeleteAnyPost(user);

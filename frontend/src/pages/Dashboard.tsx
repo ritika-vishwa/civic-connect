@@ -26,10 +26,24 @@ export const Dashboard: React.FC = () => {
   const { issues, loading } = useIssues();
   const { user } = useAuth();
 
+  // For citizens: compute MY issues (by UID or email). For officials/admins: city-wide.
+  const isCitizen = user?.role === 'citizen' || user?.role === 'moderator';
+  const myIssues = isCitizen
+    ? issues.filter((issue) => {
+        if (issue.authorId && issue.authorId === user?.uid) return true;
+        if (issue.authorEmail && issue.authorEmail === user?.email) return true;
+        return false;
+      })
+    : issues;
+
   // Calculate metrics
-  const totalReports = issues.length;
-  const resolvedCount = issues.filter(i => i.status === 'Resolved').length;
-  const criticalCount = issues.filter(i => i.severity === 'Critical' && i.status !== 'Resolved').length;
+  const totalReports = isCitizen ? myIssues.length : issues.length;
+  const resolvedCount = isCitizen
+    ? myIssues.filter(i => i.status === 'Resolved').length
+    : issues.filter(i => i.status === 'Resolved').length;
+  const criticalCount = isCitizen
+    ? myIssues.filter(i => i.severity === 'Critical' && i.status !== 'Resolved').length
+    : issues.filter(i => i.severity === 'Critical' && i.status !== 'Resolved').length;
 
   // Chart data calculation
   const categoryCounts = issues.reduce((acc, curr) => {
@@ -109,7 +123,7 @@ export const Dashboard: React.FC = () => {
             <div className="bg-primary-container/20 p-2 rounded-lg border border-primary-container/30">
               <span className="material-symbols-outlined text-primary-container text-sm drop-shadow-[0_0_8px_#00f0ff]">trending_up</span>
             </div>
-            <span className="font-label-caps text-label-caps uppercase tracking-widest text-primary-container font-bold">Total Reports</span>
+            <span className="font-label-caps text-label-caps uppercase tracking-widest text-primary-container font-bold">{isCitizen ? 'My Reports' : 'Total Reports'}</span>
           </div>
           <div className="flex items-baseline gap-3">
             <h3 className="font-display-lg text-5xl font-black text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.4)]">{totalReports}</h3>

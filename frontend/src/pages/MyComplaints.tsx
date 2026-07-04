@@ -41,10 +41,13 @@ export const MyComplaints: React.FC = () => {
     );
   }
 
-  // Filter issues filed by this user (Jane Doe is our citizen, others can see all or their own)
-  const myIssues = issues.filter(
-    (issue) => issue.authorId === user.uid || (issue.citizenName && issue.citizenName.toLowerCase() === user.name.toLowerCase()) || user.role !== 'citizen'
-  );
+  // Filter issues filed by this user — match by UID or by email (for cross-account reports)
+  const myIssues = issues.filter((issue) => {
+    if (user.role === 'admin') return true; // Admin sees all
+    if (issue.authorId && issue.authorId === user.uid) return true;
+    if (issue.authorEmail && issue.authorEmail === user.email) return true;
+    return false;
+  });
 
   // Search & Filter Heuristics
   const filtered = myIssues.filter((issue) => {

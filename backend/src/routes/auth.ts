@@ -1,11 +1,12 @@
 import { Router } from 'express';
 import { auth } from '../config/firebase';
+import { verifyAdminToken } from '../middleware/verifyAdmin';
 
 const router = Router();
 
-// Example route: Set custom user claims (Role Assignment)
-// In a real app, you MUST secure this endpoint to only allow existing admins to call it!
-router.post('/set-role', async (req, res) => {
+// POST /api/auth/set-role
+// PROTECTED: Only a verified admin can change another user's role.
+router.post('/set-role', verifyAdminToken, async (req, res) => {
   try {
     const { uid, role } = req.body;
 

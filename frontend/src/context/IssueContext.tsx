@@ -58,6 +58,7 @@ export interface Issue {
   department: string;
   assignedWorker?: string;
   authorId?: string;
+  authorEmail?: string;
   aiAnalysis?: {
     category: string;
     severity: string;
@@ -197,6 +198,7 @@ export const IssueProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         createdAt: new Date().toISOString(),
         supportedBy: auth.currentUser ? [auth.currentUser.uid] : [],
         authorId: auth.currentUser ? auth.currentUser.uid : '',
+        authorEmail: auth.currentUser ? auth.currentUser.email : '',
         history: [
           {
             id: `h-${Date.now()}`,

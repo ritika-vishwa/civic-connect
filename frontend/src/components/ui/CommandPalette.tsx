@@ -9,7 +9,8 @@ export const CommandPalette: React.FC = () => {
   const [query, setQuery] = useState('');
   const navigate = useNavigate();
   const { issues } = useIssues();
-  const { switchRole } = useAuth();
+  const { user } = useAuth();
+  const isDev = import.meta.env.DEV;
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -58,11 +59,13 @@ export const CommandPalette: React.FC = () => {
     issue.id.toLowerCase().includes(query.toLowerCase())
   );
 
-  const roles: { name: string; value: UserRole; desc: string }[] = [
+  // Role switcher only available in development mode
+  const roles: { name: string; value: UserRole; desc: string }[] = isDev ? [
     { name: 'Citizen Interface', value: 'citizen', desc: 'Default view for residents' },
     { name: 'Officer Interface', value: 'official', desc: 'View for field technicians & officers' },
+    { name: 'Moderator Interface', value: 'moderator', desc: 'View for community moderators' },
     { name: 'Admin Control Room', value: 'admin', desc: 'Full administration matrix' }
-  ];
+  ] : [];
 
   const filteredRoles = roles.filter((role) =>
     role.name.toLowerCase().includes(query.toLowerCase())
@@ -157,28 +160,26 @@ export const CommandPalette: React.FC = () => {
                   </div>
                 )}
 
-                {/* Role Switcher (Hackathon Helper) */}
-                {filteredRoles.length > 0 && (
+                {/* Role Switcher — DEV MODE ONLY */}
+                {isDev && filteredRoles.length > 0 && (
                   <div>
-                    <h6 className="text-[9px] font-mono text-yellow-400 uppercase tracking-wider mb-2 font-bold opacity-80">Role Portal (Hackathon Shortcut)</h6>
+                    <h6 className="text-[9px] font-mono text-yellow-400 uppercase tracking-wider mb-2 font-bold opacity-80">⚠ Dev Role Switcher (Disabled in Production)</h6>
                     <div className="flex flex-col gap-1">
                       {filteredRoles.map((role) => (
                         <button
                           key={role.value}
                           onClick={() => handleAction(() => {
-                            switchRole(role.value);
-                            alert(`Switched interface role to: ${role.value.toUpperCase()}`);
+                            window.location.href = '/login';
                           })}
-                          className="flex items-center justify-between w-full text-left px-3 py-2.5 rounded-xl hover:bg-yellow-500/10 border border-transparent hover:border-yellow-500/20 group transition-all"
+                          className="flex items-center justify-between w-full text-left px-3 py-2.5 rounded-xl hover:bg-yellow-500/10 border border-transparent hover:border-yellow-500/20 group transition-all opacity-60 cursor-not-allowed"
                         >
                           <div className="flex items-center gap-3">
-                            <span className="material-symbols-outlined text-[18px] text-white/40 group-hover:text-yellow-300">swap_horiz</span>
+                            <span className="material-symbols-outlined text-[18px] text-white/40 group-hover:text-yellow-300">lock</span>
                             <div>
                               <div className="text-xs uppercase font-mono tracking-widest text-white/80 group-hover:text-white font-semibold">{role.name}</div>
-                              <div className="text-[9px] text-white/40 group-hover:text-white/60 font-light mt-0.5">{role.desc}</div>
+                              <div className="text-[9px] text-yellow-400/60 font-light mt-0.5">Log in with the correct account to access this role</div>
                             </div>
                           </div>
-                          <span className="material-symbols-outlined text-[18px] text-yellow-300 opacity-0 group-hover:opacity-100 transition-opacity">chevron_right</span>
                         </button>
                       ))}
                     </div>

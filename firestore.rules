@@ -1,0 +1,159 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ─── Helper Functions ──────────────────────────────────────────────────────
+
+    // Check if the requester is authenticated
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // Get the requester's user document from Firestore
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    // Get the requester's role
+    function getRole() {
+      return getUserData().role;
+    }
+
+    // Role checks
+    function isCitizen()   { return isSignedIn() && getRole() == 'citizen'; }
+    function isOfficial()  { return isSignedIn() && getRole() == 'official'; }
+    function isModerator() { return isSignedIn() && getRole() == 'moderator'; }
+    function isAdmin()     { return isSignedIn() && getRole() == 'admin'; }
+
+    // Issue ownership: matches by authorId (UID) or authorEmail
+    function isIssueAuthor(issue) {
+      return issue.authorId == request.auth.uid ||
+             (issue.authorEmail != null && issue.authorEmail == getUserData().email);
+    }
+
+    // Issue is before assignment (citizen can still edit/delete)
+    function isBeforeAssignment(issue) {
+      return !(issue.status in ['Assigned', 'In Progress', 'Resolved', 'Closed']);
+    }
+
+    // Official's department matches the issue's department
+    function isOfficialDeptMatch(issue) {
+      return getUserData().department == issue.department;
+    }
+
+    // ─── Users Collection ─────────────────────────────────────────────────────
+
+    match /users/{userId} {
+      // Anyone logged in can read their own document; admins can read all
+      allow read: if isSignedIn() && (request.auth.uid == userId || isAdmin());
+      // Users can only write to their own document (profile updates, avatar)
+      // Admins can write any document (role management)
+      allow write: if (isSignedIn() && request.auth.uid == userId) || isAdmin();
+    }
+
+    // ─── Issues Collection ────────────────────────────────────────────────────
+
+    match /issues/{issueId} {
+      // VISITORS: Can read all public issues (city-wide browsing)
+      allow read: if true;
+
+      // CITIZENS / MODERATORS / ADMINS: Can create new issues
+      allow create: if isSignedIn() && (isCitizen() || isModerator() || isAdmin());
+
+      // UPDATE rules:
+      allow update: if
+        // Citizens: can edit their OWN issue ONLY before assignment
+        (isIssueAuthor(resource.data) && isBeforeAssignment(resource.data) && (isCitizen() || isModerator()))
+        // Officials: can update status/worker on issues in their department only
+        || (isOfficial() && isOfficialDeptMatch(resource.data))
+        // Admins: can update anything
+        || isAdmin();
+
+      // DELETE rules:
+      // Citizens: can delete their OWN issue ONLY before assignment
+      // Admins: can delete anything. Officials/Moderators: cannot delete citizen reports.
+      allow delete: if
+        (isIssueAuthor(resource.data) && isBeforeAssignment(resource.data) && isCitizen())
+        || isAdmin();
+    }
+
+    // ─── Comments Collection ──────────────────────────────────────────────────
+
+    match /comments/{commentId} {
+      // Visitors can read comments
+      allow read: if true;
+
+      // Citizens, officials, moderators, and admins can post comments
+      allow create: if isSignedIn() && (isCitizen() || isOfficial() || isModerator() || isAdmin());
+
+      // Only admins and moderators can delete any comment
+      allow delete: if isAdmin() || isModerator();
+
+      // No one can edit comments after posting
+      allow update: if false;
+    }
+
+    // ─── Community Posts Collection ───────────────────────────────────────────
+
+    match /community_posts/{postId} {
+      // Visitors can browse community posts
+      allow read: if true;
+
+      // Citizens, moderators, admins can post. Officials CANNOT create community posts.
+      allow create: if isSignedIn() && (isCitizen() || isModerator() || isAdmin());
+
+      // Authors can update their own posts; moderators and admins can update any post
+      // Only upvotedBy field updates are allowed for all signed-in users (upvoting)
+      allow update: if
+        (isSignedIn() && resource.data.authorName != null)
+        // Allow upvote array-only updates from any signed-in user
+        || (isSignedIn() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['upvotedBy']));
+
+      // Only moderators and admins can delete posts
+      allow delete: if isModerator() || isAdmin();
+    }
+
+    // ─── Community Comments Collection ────────────────────────────────────────
+
+    match /community_comments/{commentId} {
+      allow read: if true;
+      allow create: if isSignedIn() && (isCitizen() || isModerator() || isAdmin());
+      allow delete: if isModerator() || isAdmin();
+      allow update: if false;
+    }
+
+    // ─── Events Collection ────────────────────────────────────────────────────
+
+    match /events/{eventId} {
+      // Visitors can view events
+      allow read: if true;
+
+      // Officials, moderators, and admins can create events. Citizens CANNOT create events.
+      allow create: if isSignedIn() && (isOfficial() || isModerator() || isAdmin());
+
+      // Allow registration toggles (registeredBy array) for citizens/moderators/admins
+      // Allow full update for officials (their own events) and admins
+      allow update: if
+        (isSignedIn() && (isCitizen() || isModerator() || isAdmin()) &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['registeredBy']))
+        || isOfficial()
+        || isAdmin();
+
+      // Only admins can delete events
+      allow delete: if isAdmin();
+    }
+
+    // ─── Notifications Collection ─────────────────────────────────────────────
+
+    match /notifications/{notifId} {
+      // Any logged-in user can read notifications
+      allow read: if isSignedIn();
+
+      // The system (backend) creates notifications; frontend can only mark as read
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isRead']);
+      allow delete: if isAdmin();
+    }
+  }
+}
