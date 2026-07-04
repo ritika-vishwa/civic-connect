@@ -5,17 +5,20 @@ import { useNavigate } from 'react-router-dom';
 
 interface OfficialProfileStatsProps {
   issues: any[];
+  user: any;
 }
 
-export const OfficialProfileStats: React.FC<OfficialProfileStatsProps> = ({ issues }) => {
+export const OfficialProfileStats: React.FC<OfficialProfileStatsProps> = ({ issues, user }) => {
   const navigate = useNavigate();
   
-  // Official metrics calculation
-  const assignedIssues = issues.filter(i => i.status !== 'Resolved');
-  const resolvedByDept = issues.filter(i => i.status === 'Resolved');
+  // Official metrics calculation (filtered by department)
+  const deptIssues = issues.filter(i => !user?.department || !i.department || i.department === user.department);
+  
+  const assignedIssues = deptIssues.filter(i => i.status !== 'Resolved');
+  const resolvedByDept = deptIssues.filter(i => i.status === 'Resolved');
   
   const criticalCount = assignedIssues.filter(i => i.severity === 'Critical').length;
-  const resolutionRate = issues.length > 0 ? Math.round((resolvedByDept.length / issues.length) * 100) : 100;
+  const resolutionRate = deptIssues.length > 0 ? Math.round((resolvedByDept.length / deptIssues.length) * 100) : 100;
 
   return (
     <div className="col-span-1 lg:col-span-8 flex flex-col gap-8 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
@@ -64,8 +67,8 @@ export const OfficialProfileStats: React.FC<OfficialProfileStatsProps> = ({ issu
         {assignedIssues.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {assignedIssues.slice(0, 4).map((issue) => (
-              <div key={issue.id} className="scale-95 origin-top-left w-[105%]">
-                <IssueCard issue={issue} />
+              <div key={issue.id} className="w-full">
+                <IssueCard issue={issue} layout="col" />
               </div>
             ))}
           </div>

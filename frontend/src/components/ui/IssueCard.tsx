@@ -53,6 +53,9 @@ export const IssueCard: React.FC<IssueCardProps> = ({ issue, className = '', lay
         <img 
           src={issue.image} 
           alt={issue.title}
+          onError={(e) => {
+            (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1518005020951-eccb494ad742?auto=format&fit=crop&q=80&w=400';
+          }}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
         />
         <div className="absolute top-2 left-2">

@@ -97,7 +97,7 @@ export const App: React.FC = () => {
               {/* Transactional/Auth Routes wrapped in CanvasLayout */}
               <Route element={<CanvasLayout />}>
                 <Route path="/login" element={<Login />} />
-                <Route path="/report" element={<ProtectedRoute><ReportIssue /></ProtectedRoute>} />
+                <Route path="/report" element={<RoleRoute allowedRoles={['citizen', 'moderator', 'admin']}><ReportIssue /></RoleRoute>} />
                 <Route path="/success" element={<ProtectedRoute><SuccessScreen /></ProtectedRoute>} />
               </Route>
 

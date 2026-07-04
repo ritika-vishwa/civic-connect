@@ -11,6 +11,7 @@ import { db } from '../firebase';
 import { CitizenProfileStats } from '../components/profile/CitizenProfileStats';
 import { OfficialProfileStats } from '../components/profile/OfficialProfileStats';
 import { AdminProfileStats } from '../components/profile/AdminProfileStats';
+import { ModeratorProfileStats } from '../components/profile/ModeratorProfileStats';
 
 export const Profile: React.FC = () => {
   const { user, logout, deleteAccount, updateUserAvatar } = useAuth();
@@ -95,9 +96,9 @@ export const Profile: React.FC = () => {
 
   if (!user) return null;
 
-  // Filter to just the user's issues
+  // Filter to just the user's issues securely by UID
   const myIssues = issues.filter(
-    (issue) => issue.authorId === user.uid || (issue.citizenName && issue.citizenName.toLowerCase() === user.name.toLowerCase())
+    (issue) => issue.authorId === user.uid
   );
 
   // Statistics
@@ -117,7 +118,10 @@ export const Profile: React.FC = () => {
             My Profile
           </h1>
           <p className="text-primary-container/80 font-mono text-sm mt-2 uppercase tracking-widest">
-            Manage your network node permissions and inspect engagement history.
+            {user.role === 'admin' && 'Manage your global network and permissions.'}
+            {user.role === 'official' && 'Review your assigned queue and dispatch log.'}
+            {user.role === 'moderator' && 'Manage community health and verify reports.'}
+            {user.role === 'citizen' && 'Manage your network node and engagement history.'}
           </p>
         </div>
         <div className="flex gap-2">
@@ -132,8 +136,8 @@ export const Profile: React.FC = () => {
             onClick={() => setShowDeleteModal(true)}
             className="flex items-center gap-2 bg-error/10 hover:bg-error/20 text-error border border-error/30 px-4 py-2 rounded-xl font-label-caps text-xs tracking-widest uppercase transition-all cursor-pointer shadow-[0_0_15px_rgba(255,180,171,0.1)]"
           >
-            <span className="material-symbols-outlined text-lg">person_remove</span>
-            Sign out
+            <span className="material-symbols-outlined text-lg">delete_forever</span>
+            Delete Account
           </button>
         </div>
       </div>
@@ -211,7 +215,9 @@ export const Profile: React.FC = () => {
         {user.role === 'admin' ? (
           <AdminProfileStats />
         ) : user.role === 'official' ? (
-          <OfficialProfileStats issues={issues} />
+          <OfficialProfileStats issues={issues} user={user} />
+        ) : user.role === 'moderator' ? (
+          <ModeratorProfileStats issues={issues} />
         ) : (
           <CitizenProfileStats 
             reportsCount={reportsCount} 

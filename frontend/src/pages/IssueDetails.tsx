@@ -148,6 +148,9 @@ export const IssueDetails: React.FC = () => {
         <img 
           src={issue.image} 
           alt={issue.title} 
+          onError={(e) => {
+            (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1518005020951-eccb494ad742?auto=format&fit=crop&q=80&w=1200';
+          }}
           className="w-full h-full object-cover opacity-80"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-[#031427] via-[#031427]/40 to-transparent" />

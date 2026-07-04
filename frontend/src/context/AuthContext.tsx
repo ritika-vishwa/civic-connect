@@ -34,7 +34,6 @@ interface AuthContextProps {
   loginWithGoogle: () => Promise<void>;
   logout: () => void;
   deleteAccount: () => Promise<void>;
-  switchRole: (role: UserRole) => void;
   resetPassword: (email: string) => Promise<void>;
   updateUserAvatar: (url: string) => Promise<void>;
 }
@@ -263,19 +262,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const switchRole = async (role: UserRole) => {
-    // For UI preservation, update the Firestore document directly
-    if (user) {
-      try {
-        const userDocRef = doc(db, 'users', user.uid);
-        const profile = FALLBACK_PROFILES[role];
-        await setDoc(userDocRef, { role, department: profile.department || null }, { merge: true });
-        setUser({ ...user, role, department: profile.department });
-      } catch (error) {
-        console.error("Failed to switch role in DB:", error);
-      }
-    }
-  };
+
 
   const resetPassword = async (email: string) => {
     try {
@@ -295,7 +282,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       loginWithGoogle, 
       logout, 
       deleteAccount, 
-      switchRole, 
       resetPassword,
       updateUserAvatar 
     }}>

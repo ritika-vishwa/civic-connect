@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { CitizenDashboard } from '../components/dashboard/CitizenDashboard';
 import { OfficialDashboard } from '../components/dashboard/OfficialDashboard';
 import { AdminDashboard } from '../components/dashboard/AdminDashboard';
+import { ModeratorDashboard } from '../components/dashboard/ModeratorDashboard';
 
 export const Dashboard: React.FC = () => {
   const { user, loading } = useAuth();
@@ -32,7 +33,11 @@ export const Dashboard: React.FC = () => {
     return <OfficialDashboard />;
   }
 
-  // Default for citizens and moderators
+  if (user.role === 'moderator') {
+    return <ModeratorDashboard />;
+  }
+
+  // Default for citizens
   return <CitizenDashboard />;
 };
 
