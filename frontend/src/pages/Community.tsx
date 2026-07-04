@@ -205,10 +205,10 @@ export const Community: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-white/10 pb-6 animate-fade-in-up">
         <div>
-          <h1 className="font-display-lg text-4xl md:text-5xl font-black text-white uppercase tracking-tight drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]">
-            Community Discussions & Engagement
+          <h1 className="font-display-lg text-3xl md:text-4xl font-black text-white uppercase tracking-tight drop-shadow-[0_0_15px_rgba(255,255,255,0.3)] max-w-3xl leading-tight">
+            Community Discussions <br className="hidden md:block" /> & Engagement
           </h1>
-          <p className="text-primary-container/80 font-mono text-sm mt-2 uppercase tracking-widest">
+          <p className="text-primary-container/80 font-mono text-xs md:text-sm mt-3 uppercase tracking-widest max-w-2xl leading-relaxed">
             Neighborhood Discussions: share suggestions, ask questions, and discuss local concerns.
           </p>
         </div>
@@ -321,8 +321,16 @@ export const Community: React.FC = () => {
 
               {/* Image if any */}
               {post.image && (
-                <div className="w-full rounded-xl border border-white/10 mb-4 bg-black/40 overflow-hidden flex justify-center aspect-video">
-                  <img src={post.image} alt={post.title} className="w-full h-full object-cover object-center" />
+                <div className="w-full rounded-xl border border-white/10 mb-4 bg-black/40 overflow-hidden flex justify-center max-h-[400px]">
+                  <img 
+                    src={post.image} 
+                    alt={post.title} 
+                    className="w-full h-full object-cover object-center" 
+                    referrerPolicy="no-referrer"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).style.display = 'none';
+                    }}
+                  />
                 </div>
               )}
 
