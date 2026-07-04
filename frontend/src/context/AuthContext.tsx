@@ -6,6 +6,7 @@ import {
   signOut as firebaseSignOut,
   GoogleAuthProvider,
   signInWithPopup,
+  signInWithRedirect,
   deleteUser,
   setPersistence,
   browserSessionPersistence,
@@ -184,9 +185,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const loginWithGoogle = async () => {
+    const provider = new GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: 'select_account' });
     try {
-      const provider = new GoogleAuthProvider();
-      provider.setCustomParameters({ prompt: 'select_account' });
       const userCredential = await signInWithPopup(auth, provider);
       
       const email = userCredential.user.email || '';
@@ -227,9 +228,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // Existing account: always load role from Firestore — never overwrite it
         setUser({ uid: userCredential.user.uid, ...userDocSnap.data() } as User);
       }
-    } catch (error) {
-      console.error('Google login failed:', error);
-      throw error;
+    } catch (popupError: any) {
+      console.warn("signInWithPopup failed, trying redirect fallback:", popupError);
+      
+      // If it is an unauthorized domain error, throw it so the UI can warn the developer
+      if (popupError.code === 'auth/unauthorized-domain') {
+        throw popupError;
+      }
+      
+      try {
+        await signInWithRedirect(auth, provider);
+      } catch (redirectError: any) {
+        console.error("signInWithRedirect failed:", redirectError);
+        throw redirectError;
+      }
     }
   };
 

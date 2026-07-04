@@ -115,8 +115,41 @@ export const ReportIssue: React.FC = () => {
       setDescription(data.description);
       showToast('AI optimization complete!', 'success');
     } catch (e) {
-      console.error(e);
-      showToast('AI assist failed. Please edit manually.', 'error');
+      console.warn("Backend AI Assist failed, attempting client-side Gemini fallback:", e);
+      const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+      if (apiKey) {
+        try {
+          const genAI = new GoogleGenerativeAI(apiKey);
+          const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+          const prompt = `Optimize this civic issue report. Rewrite the description to be formal and structured for city officials. Keep it concise.
+          Title: ${title}
+          Rough Description: ${description}
+          
+          Return a JSON object exactly matching this format:
+          {
+            "title": "Optimized Title",
+            "description": "Optimized Description"
+          }
+          Do not include any markdown styling like \`\`\`json. Return raw JSON.`;
+          
+          const result = await model.generateContent(prompt);
+          const responseText = result.response.text();
+          const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+          if (jsonMatch) {
+            const data = JSON.parse(jsonMatch[0]);
+            setTitle(data.title || title);
+            setDescription(data.description || description);
+            showToast('AI optimization complete (client fallback)!', 'success');
+          } else {
+            throw new Error("Invalid AI response format");
+          }
+        } catch (clientError) {
+          console.error("Direct Gemini client call failed:", clientError);
+          showToast('AI assist failed. Please edit manually.', 'error');
+        }
+      } else {
+        showToast('AI assist failed. Please edit manually.', 'error');
+      }
     } finally {
       setIsAiAssisting(false);
     }
@@ -161,8 +194,66 @@ export const ReportIssue: React.FC = () => {
 
       showToast('AI successfully extracted issue details from image', 'success');
     } catch (error) {
-      console.error(error);
-      showToast('AI analysis failed. Please fill manually.', 'error');
+      console.warn("Backend AI image analysis failed, attempting client-side Gemini fallback:", error);
+      const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+      if (apiKey) {
+        try {
+          const genAI = new GoogleGenerativeAI(apiKey);
+          const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+          
+          const mimeType = base64Image.match(/data:(.*?);base64/)?.[1] || 'image/jpeg';
+          const base64Data = base64Image.split(',')[1];
+          
+          const prompt = `Analyze this image of a municipal/civic issue. Return a JSON object detailing the issue:
+          {
+            "title": "A short descriptive title of the issue",
+            "description": "A detailed description of the issue shown in the image",
+            "category": "Potholes | Water Leaks | Drainage Blockages | Broken Streetlights | Garbage Accumulation | Sanitation Issues | Other",
+            "severity": "Low | Medium | High | Critical",
+            "department": "Public Works | Sanitation | Traffic Control | Urban Operations",
+            "confidence": 0.95
+          }
+          Return raw JSON only, no markdown blocks.`;
+          
+          const result = await model.generateContent([
+            prompt,
+            {
+              inlineData: {
+                data: base64Data,
+                mimeType
+              }
+            }
+          ]);
+          
+          const responseText = result.response.text();
+          const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+          if (jsonMatch) {
+            const aiData = JSON.parse(jsonMatch[0]);
+            setCategory(aiData.category || 'Other');
+            setTitle(aiData.title || '');
+            setDescription(aiData.description || '');
+            setSeverity(aiData.severity || 'Medium');
+            
+            setAiSuggestions(prev => ({
+              ...prev,
+              title: aiData.title || '',
+              description: aiData.description || '',
+              category: aiData.category || 'Other',
+              severity: aiData.severity || 'Medium',
+              department: aiData.department || 'Urban Operations',
+              confidence: aiData.confidence || 0.95
+            }));
+            showToast('AI successfully analyzed image (client fallback)', 'success');
+          } else {
+            throw new Error("Invalid format from client-side Gemini");
+          }
+        } catch (clientError) {
+          console.error("Direct Gemini client call failed:", clientError);
+          showToast('AI analysis failed. Please fill manually.', 'error');
+        }
+      } else {
+        showToast('AI analysis failed. Please fill manually.', 'error');
+      }
     } finally {
       setIsAnalyzingImage(false);
     }

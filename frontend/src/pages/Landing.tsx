@@ -52,6 +52,7 @@ export const Landing: React.FC = () => {
   const { user, loading } = useAuth();
   const [scrolled, setScrolled] = useState(false);
   const [activeIssueType, setActiveIssueType] = useState(0);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const issueTypes = [
     { icon: 'construction', label: 'Potholes & Road Damage', color: 'text-orange-400' },
@@ -193,28 +194,93 @@ export const Landing: React.FC = () => {
         transition={{ type: 'spring', stiffness: 200, damping: 20 }}
         className={`fixed top-0 w-full z-50 transition-all duration-300 ${scrolled ? 'bg-[#00060d]/90 backdrop-blur-xl border-b border-primary-container/20 shadow-[0_4px_30px_rgba(0,240,255,0.1)]' : 'bg-transparent'}`}
       >
-        <div className="flex justify-between items-center px-margin-mobile md:px-margin-desktop h-20 max-w-container-max mx-auto w-full">
-          <button onClick={() => navigate('/')} className="font-display-lg text-headline-lg-mobile md:text-title-md tracking-widest uppercase text-white flex items-center gap-3 font-bold bg-transparent border-0 focus:outline-none">
+        <div className="flex justify-between items-center px-margin-mobile md:px-margin-desktop h-20 max-w-container-max mx-auto w-full relative">
+          <button onClick={() => navigate('/')} className="font-display-lg text-headline-lg-mobile md:text-title-md tracking-widest uppercase text-white flex items-center gap-3 font-bold bg-transparent border-0 focus:outline-none cursor-pointer">
             <motion.span whileHover={{ rotate: 180 }} transition={{ duration: 0.5 }} className="material-symbols-outlined text-primary-container drop-shadow-[0_0_8px_#00f0ff]" style={{ fontVariationSettings: "'FILL' 1" }}>public</motion.span>
             CivicConnect
           </button>
+          
           <nav className="hidden md:flex items-center gap-10 font-label-caps text-label-caps uppercase tracking-widest text-on-surface-variant">
-            <button onClick={() => navigate('/about')} className="hover:text-primary-container transition-colors cursor-pointer bg-transparent border-0">About</button>
-            {!loading && !user && <button onClick={() => navigate('/login')} className="hover:text-primary-container transition-colors cursor-pointer bg-transparent border-0">Sign Up</button>}
-            {!loading && user && <button onClick={handleHeroCTA} className="hover:text-primary-container transition-colors cursor-pointer bg-transparent border-0">Dashboard</button>}
+            <button onClick={() => navigate('/about')} className="hover:text-primary-container transition-colors cursor-pointer bg-transparent border-0 font-label-caps text-label-caps uppercase tracking-widest text-white font-bold h-12">About</button>
+            {!loading && !user && <button onClick={() => navigate('/login')} className="hover:text-primary-container transition-colors cursor-pointer bg-transparent border-0 font-label-caps text-label-caps uppercase tracking-widest text-white font-bold h-12">Sign Up</button>}
+            {!loading && user && <button onClick={handleHeroCTA} className="hover:text-primary-container transition-colors cursor-pointer bg-transparent border-0 font-label-caps text-label-caps uppercase tracking-widest text-white font-bold h-12">Dashboard</button>}
           </nav>
-          <div className="flex items-center gap-4 text-white">
+          
+          <div className="flex items-center gap-2 sm:gap-4 text-white">
             {loading ? null : !user ? (
-              <motion.button whileHover={{ scale: 1.05, backgroundColor: 'rgba(0, 240, 255, 0.15)' }} whileTap={{ scale: 0.95 }} onClick={() => navigate('/login')} className="text-white bg-primary-container/10 border border-primary-container/30 transition-colors px-5 py-2 rounded-full flex items-center gap-2 font-label-caps text-xs uppercase tracking-widest shadow-[0_0_15px_rgba(0,240,255,0.1)]">
+              <motion.button whileHover={{ scale: 1.05, backgroundColor: 'rgba(0, 240, 255, 0.15)' }} whileTap={{ scale: 0.95 }} onClick={() => navigate('/login')} className="hidden sm:flex text-white bg-primary-container/10 border border-primary-container/30 transition-colors px-5 py-2 rounded-full items-center gap-2 font-label-caps text-xs uppercase tracking-widest shadow-[0_0_15px_rgba(0,240,255,0.1)] min-h-[44px]">
                 <span>Sign In</span>
                 <span className="material-symbols-outlined text-[16px]">login</span>
               </motion.button>
             ) : (
-              <motion.button whileHover={{ scale: 1.1, backgroundColor: 'rgba(0, 240, 255, 0.2)' }} whileTap={{ scale: 0.9 }} onClick={() => navigate('/profile')} className="text-white bg-primary-container/10 border border-primary-container/30 transition-colors p-2 rounded-full shadow-[0_0_15px_rgba(0,240,255,0.1)] flex items-center justify-center">
+              <motion.button whileHover={{ scale: 1.1, backgroundColor: 'rgba(0, 240, 255, 0.2)' }} whileTap={{ scale: 0.9 }} onClick={() => navigate('/profile')} className="hidden sm:flex text-white bg-primary-container/10 border border-primary-container/30 transition-colors p-2.5 rounded-full shadow-[0_0_15px_rgba(0,240,255,0.1)] items-center justify-center min-w-[44px] min-h-[44px]">
                 <span className="material-symbols-outlined">account_circle</span>
               </motion.button>
             )}
+
+            {/* Mobile Menu Hamburger Toggle */}
+            <button
+              onClick={() => setMenuOpen(!menuOpen)}
+              className="flex md:hidden text-white hover:text-primary-container transition-colors p-2.5 rounded-full hover:bg-primary-container/10 cursor-pointer min-w-[44px] min-h-[44px] items-center justify-center z-50"
+              aria-label="Toggle Navigation Menu"
+            >
+              <span className="material-symbols-outlined text-2xl">
+                {menuOpen ? 'close' : 'menu'}
+              </span>
+            </button>
           </div>
+
+          {/* Mobile Navigation Dropdown Drawer */}
+          <AnimatePresence>
+            {menuOpen && (
+              <motion.div
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.25, ease: 'easeInOut' }}
+                className="absolute top-20 left-0 right-0 w-full bg-[#00060d]/95 backdrop-blur-2xl border-b border-primary-container/20 flex flex-col items-stretch p-6 gap-4 z-40 md:hidden shadow-[0_10px_30px_rgba(0,240,255,0.15)]"
+              >
+                <button 
+                  onClick={() => { setMenuOpen(false); navigate('/about'); }} 
+                  className="w-full py-4 text-left font-label-caps text-sm uppercase tracking-widest text-white hover:text-primary-container transition-colors border-b border-white/5 cursor-pointer font-bold min-h-[48px]"
+                >
+                  About
+                </button>
+                {!loading && !user && (
+                  <>
+                    <button 
+                      onClick={() => { setMenuOpen(false); navigate('/login'); }} 
+                      className="w-full py-4 text-left font-label-caps text-sm uppercase tracking-widest text-white hover:text-primary-container transition-colors border-b border-white/5 cursor-pointer font-bold min-h-[48px]"
+                    >
+                      Sign Up
+                    </button>
+                    <button 
+                      onClick={() => { setMenuOpen(false); navigate('/login'); }} 
+                      className="w-full py-4 text-left font-label-caps text-sm uppercase tracking-widest text-white hover:text-primary-container transition-colors border-b border-white/5 cursor-pointer font-bold min-h-[48px]"
+                    >
+                      Sign In
+                    </button>
+                  </>
+                )}
+                {!loading && user && (
+                  <>
+                    <button 
+                      onClick={() => { setMenuOpen(false); handleHeroCTA(); }} 
+                      className="w-full py-4 text-left font-label-caps text-sm uppercase tracking-widest text-white hover:text-primary-container transition-colors border-b border-white/5 cursor-pointer font-bold min-h-[48px]"
+                    >
+                      Dashboard
+                    </button>
+                    <button 
+                      onClick={() => { setMenuOpen(false); navigate('/profile'); }} 
+                      className="w-full py-4 text-left font-label-caps text-sm uppercase tracking-widest text-white hover:text-primary-container transition-colors border-b border-white/5 cursor-pointer font-bold min-h-[48px]"
+                    >
+                      Profile
+                    </button>
+                  </>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </motion.header>
 
@@ -241,7 +307,7 @@ export const Landing: React.FC = () => {
             </motion.h1>
 
             <motion.p variants={itemVariants} className="font-body-lg text-base sm:text-xl md:text-2xl max-w-3xl mx-auto mb-6 text-on-surface-variant font-light leading-relaxed px-2">
-              Report civic issues instantly. Track resolutions, participate in local discussions, and build a stronger community together.
+              Civic Issue Reporting & Community Engagement Platform
             </motion.p>
 
             {/* Issue Type Ticker */}

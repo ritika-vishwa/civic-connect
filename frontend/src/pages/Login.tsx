@@ -62,8 +62,13 @@ export const Login: React.FC = () => {
       await loginWithGoogle();
       showToast('Successfully logged in with Google', 'success');
       navigate('/dashboard');
-    } catch (err) {
-      showToast('Google authentication failed.', 'error');
+    } catch (err: any) {
+      console.error("Google Auth failed:", err);
+      if (err.code === 'auth/unauthorized-domain') {
+        showToast('Unauthorized Domain! Please add this Vercel domain to Firebase Console > Auth > Settings > Authorized Domains.', 'error');
+      } else {
+        showToast('Google authentication failed. Please try again.', 'error');
+      }
     }
   };
 
