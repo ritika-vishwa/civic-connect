@@ -93,6 +93,7 @@ export const IssueProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   // Real-time listener for issues
   useEffect(() => {
+    setLoading(true);
     const q = query(collection(db, 'issues'), orderBy('createdAt', 'desc'));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const fetchedIssues = snapshot.docs.map(doc => ({
@@ -106,7 +107,7 @@ export const IssueProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       setLoading(false);
     });
     return () => unsubscribe();
-  }, []);
+  }, [user?.uid]);
 
   // Real-time listener for comments
   useEffect(() => {
@@ -121,7 +122,7 @@ export const IssueProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       console.error("Firestore Comments Error: ", error);
     });
     return () => unsubscribe();
-  }, []);
+  }, [user?.uid]);
 
   // Merge issues and comments to preserve UI expectations
   useEffect(() => {
@@ -157,9 +158,28 @@ export const IssueProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
           imageUrl = await Promise.race([uploadPromise, timeoutPromise]) as string;
         } catch (e) {
-          console.warn("Storage upload failed or timed out, falling back to dummy image to ensure functionality.", e);
-          // Fallback to a realistic placeholder if Firebase Storage is not configured properly
-          imageUrl = 'https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?auto=format&fit=crop&q=80&w=800';
+          console.warn("Storage upload failed or timed out, attempting backend upload fallback.", e);
+          try {
+            const res = await fetch(imageUrl);
+            const blob = await res.blob();
+            const formData = new FormData();
+            formData.append('image', blob, `issue-${Date.now()}.jpg`);
+            
+            const uploadRes = await fetch('http://localhost:3001/api/upload', {
+              method: 'POST',
+              body: formData
+            });
+
+            if (uploadRes.ok) {
+              const uploadData = await uploadRes.json();
+              imageUrl = uploadData.url;
+            } else {
+              throw new Error("Backend upload failed");
+            }
+          } catch (backendErr) {
+            console.warn("Backend upload failed, falling back to default placeholder image.", backendErr);
+            imageUrl = 'https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?auto=format&fit=crop&q=80&w=800';
+          }
         }
       }
 

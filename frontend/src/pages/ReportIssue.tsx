@@ -14,9 +14,9 @@ import { canReportIssue } from '../context/permissions';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const stepVariants = {
-  initial: { opacity: 0, scale: 0.98, y: 8 },
-  animate: { opacity: 1, scale: 1, y: 0, transition: { duration: 0.35, ease: [0.16, 1, 0.3, 1] } },
-  exit: { opacity: 0, scale: 0.98, y: -8, transition: { duration: 0.2, ease: [0.16, 1, 0.3, 1] } }
+  initial: { opacity: 0, x: 20 },
+  animate: { opacity: 1, x: 0, transition: { duration: 0.4, ease: [0.16, 1, 0.3, 1] } },
+  exit: { opacity: 0, x: -20, transition: { duration: 0.2, ease: [0.16, 1, 0.3, 1] } }
 } as const;
 
 
@@ -97,26 +97,22 @@ export const ReportIssue: React.FC = () => {
     setIsAiAssisting(true);
 
     try {
-      const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-      if (!apiKey) throw new Error("Missing Gemini API Key");
-      const genAI = new GoogleGenerativeAI(apiKey);
-      const model = genAI.getGenerativeModel({ 
-        model: 'gemini-2.5-flash',
-        generationConfig: { responseMimeType: "application/json" }
+      const response = await fetch('http://localhost:3001/api/ai/assist', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ title, description })
       });
 
-      const prompt = `Rewrite the following issue description to be professional, detailed, and objective for a city municipal department. Keep it concise. Also generate a short, punchy title. Return ONLY a JSON object with "title" and "description" keys.\n\nOriginal title: ${title}\nOriginal description: ${description}`;
-      const result = await model.generateContent(prompt);
-      
-      let jsonStr = result.response.text().trim();
-      const match = jsonStr.match(/\{[\s\S]*\}/);
-      if (match) {
-        jsonStr = match[0];
+      if (!response.ok) {
+        throw new Error('Failed to rewrite description');
       }
-      const data = JSON.parse(jsonStr);
 
-      if (data.title) setTitle(data.title);
-      if (data.description) setDescription(data.description);
+      const data = await response.json();
+
+      setTitle(data.title);
+      setDescription(data.description);
       showToast('AI optimization complete!', 'success');
     } catch (e) {
       console.error(e);
@@ -128,43 +124,25 @@ export const ReportIssue: React.FC = () => {
 
   const simulateAiImageAnalysis = async (base64Image: string) => {
     setIsAnalyzingImage(true);
+    setTitle('');
+    setDescription('');
+    setCategory('Other');
     showToast('AI analyzing image signature...', 'info');
 
     try {
-      const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-      if (!apiKey) {
-        showToast('Gemini API key not found. Please add to .env.local', 'error');
-        return;
-      }
-
-      const genAI = new GoogleGenerativeAI(apiKey);
-      const model = genAI.getGenerativeModel({ 
-        model: 'gemini-2.5-flash',
-        generationConfig: { responseMimeType: "application/json" }
+      const response = await fetch('http://localhost:3001/api/ai/analyze-image', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ image: base64Image })
       });
 
-      const base64Data = base64Image.split(',')[1];
-      const mimeType = base64Image.split(';')[0].split(':')[1];
-
-      const prompt = `Analyze this image of a civic issue. Return ONLY a valid JSON object (no markdown formatting, no backticks) with the following fields:
-"category": one of ["Potholes", "Water Leaks", "Broken Streetlights", "Garbage Accumulation", "Drainage Blockages", "Road Damage", "Sanitation Issues", "Other"].
-"confidence": a number between 0 and 1 indicating how confident you are.
-"severity": one of ["Low", "Medium", "High", "Critical"].
-"department": one of ["Public Works", "Sanitation", "Traffic Control", "Urban Operations"].
-"title": A short, clear title for the issue.
-"description": A detailed description of what is seen in the image.`;
-
-      const result = await model.generateContent([
-        prompt,
-        { inlineData: { data: base64Data, mimeType } }
-      ]);
-
-      let jsonStr = result.response.text().trim();
-      const match = jsonStr.match(/\{[\s\S]*\}/);
-      if (match) {
-        jsonStr = match[0];
+      if (!response.ok) {
+        throw new Error('Failed to analyze image');
       }
-      const aiData = JSON.parse(jsonStr);
+
+      const aiData = await response.json();
 
       setCategory(aiData.category || 'Other');
       setTitle(aiData.title || '');
@@ -316,9 +294,9 @@ export const ReportIssue: React.FC = () => {
 
   return (
     <motion.div 
-      initial={{ opacity: 0, y: 15 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+      initial={{ opacity: 0, scale: 0.96, y: 20 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
       className="w-full flex flex-col items-center"
     >
       {/* Header */}
@@ -530,30 +508,45 @@ export const ReportIssue: React.FC = () => {
                   type="file"
                   accept="image/*"
                   onChange={handleImageSelect}
-                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  onClick={(e) => { (e.target as HTMLInputElement).value = ''; }}
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-0"
                 />
 
                 {isAnalyzingImage ? (
-                  <div className="flex flex-col items-center justify-center gap-3">
+                  <div className="flex flex-col items-center justify-center gap-3 relative z-10 pointer-events-none">
                     <span className="material-symbols-outlined text-4xl text-primary-container animate-spin">sync</span>
                     <span className="text-xs text-primary-container font-bold uppercase tracking-widest animate-pulse">Neural Vision Analyzing...</span>
                   </div>
                 ) : image ? (
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-4 w-full px-4 relative z-10 pointer-events-none">
                     <img src={image} alt="Preview" className="w-20 h-16 object-cover rounded-lg border border-white/20" />
-                    <div className="text-left">
+                    <div className="text-left flex-1">
                       <span className="text-xs text-white font-bold uppercase font-mono block">Image Loaded</span>
                       <span className="text-[10px] text-white/40 font-mono block mt-0.5">Drag to replace or click</span>
                     </div>
+                    <button 
+                      type="button"
+                      onClick={(e) => { 
+                        e.preventDefault(); 
+                        e.stopPropagation(); 
+                        setImage(''); 
+                        setTitle('');
+                        setDescription('');
+                        setCategory('Other');
+                      }}
+                      className="bg-red-500/20 text-red-400 p-2 rounded-full hover:bg-red-500/40 pointer-events-auto transition-colors z-20"
+                    >
+                      <span className="material-symbols-outlined text-[18px]">delete</span>
+                    </button>
                   </div>
                 ) : (
-                  <>
+                  <div className="relative z-10 pointer-events-none flex flex-col items-center">
                     <span className="material-symbols-outlined text-4xl text-white/30">add_a_photo</span>
                     <div>
                       <span className="text-xs text-white font-semibold uppercase tracking-wider block">Drag & Drop Image Evidence</span>
                       <span className="text-[10px] text-white/40 font-mono block mt-1">Supports PNG, JPG up to 10MB</span>
                     </div>
-                  </>
+                  </div>
                 )}
               </div>
             </div>
