@@ -7,6 +7,11 @@ import { useNotification } from '../context/NotificationContext';
 import { collection, onSnapshot, query, doc, updateDoc, arrayUnion, arrayRemove, addDoc, orderBy, deleteDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useAuth } from '../context/AuthContext';
+import {
+  canRegisterForEvents,
+  canCreateEvents,
+  canAccessAdmin,
+} from '../context/permissions';
 
 interface EventItem {
   id: string;
@@ -42,6 +47,10 @@ export const Events: React.FC = () => {
   const { showToast } = useNotification();
   const { user } = useAuth();
 
+  const canRegister = canRegisterForEvents(user);
+  const canCreate = canCreateEvents(user);
+  const canDelete = canAccessAdmin(user);
+
   useEffect(() => {
     const q = query(collection(db, 'events'), orderBy('date', 'asc'));
     const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -67,8 +76,8 @@ export const Events: React.FC = () => {
   }, [rawEvents, user]);
 
   const handleRegister = async (id: string) => {
-    if (!user) {
-      showToast('You must be logged in to register.', 'warning');
+    if (!canRegister) {
+      showToast('Please log in as a citizen to register for events.', 'warning');
       return;
     }
     const evt = events.find(e => e.id === id);

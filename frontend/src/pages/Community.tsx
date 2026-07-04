@@ -3,9 +3,15 @@ import { GlassCard } from '../components/ui/GlassCard';
 import { useAuth } from '../context/AuthContext';
 import { useNotification } from '../context/NotificationContext';
 
-import { collection, query, orderBy, onSnapshot, addDoc, updateDoc, doc, arrayUnion, arrayRemove } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, addDoc, updateDoc, doc, arrayUnion, arrayRemove, deleteDoc } from 'firebase/firestore';
 import { ref, uploadString, getDownloadURL } from 'firebase/storage';
 import { db, storage } from '../firebase';
+import {
+  canParticipateInDiscussions,
+  canSupportIssue,
+  canModerateContent,
+  canDeleteAnyPost,
+} from '../context/permissions';
 
 interface Comment {
   id: string;
@@ -45,6 +51,11 @@ export const Community: React.FC = () => {
   
   const { user } = useAuth();
   const { showToast } = useNotification();
+
+  const canPost = canParticipateInDiscussions(user);
+  const canUpvote = canSupportIssue(user);
+  const canModerate = canModerateContent(user);
+  const canDeletePost = canDeleteAnyPost(user);
 
   // Firestore Listeners
   React.useEffect(() => {
@@ -95,8 +106,8 @@ export const Community: React.FC = () => {
   };
 
   const handleUpvote = async (postId: string) => {
-    if (!user) {
-      showToast('You must be logged in to upvote', 'warning');
+    if (!canUpvote) {
+      showToast('Please log in to upvote posts', 'warning');
       return;
     }
     const post = posts.find(p => p.id === postId);
@@ -117,7 +128,7 @@ export const Community: React.FC = () => {
 
   const handleCreatePost = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newTitle.trim() || !newDesc.trim() || !user) return;
+    if (!newTitle.trim() || !newDesc.trim() || !user || !canPost) return;
 
     try {
       let finalImageUrl = null;
@@ -157,7 +168,10 @@ export const Community: React.FC = () => {
   };
 
   const handleAddComment = async (postId: string) => {
-    if (!newCommentText.trim() || !user) return;
+    if (!newCommentText.trim() || !user || !canPost) {
+      if (!canPost) showToast('You must be logged in to comment', 'warning');
+      return;
+    }
 
     try {
       await addDoc(collection(db, 'community_comments'), {
@@ -174,6 +188,16 @@ export const Community: React.FC = () => {
     }
   };
 
+  const handleDeletePost = async (postId: string) => {
+    if (!canDeletePost) return;
+    try {
+      await deleteDoc(doc(db, 'community_posts', postId));
+      showToast('Post removed by moderator', 'success');
+    } catch (error) {
+      showToast('Failed to remove post', 'error');
+    }
+  };
+
   return (
     <div className="flex flex-col gap-8 w-full">
       {/* Header */}
@@ -187,13 +211,16 @@ export const Community: React.FC = () => {
           </p>
         </div>
         
-        <button 
-          onClick={() => setShowForm(!showForm)}
-          className="primary-btn rounded-xl py-3 px-5 text-xs font-bold uppercase tracking-widest flex items-center justify-center gap-2"
-        >
-          <span className="material-symbols-outlined text-[16px]">rate_review</span>
-          {showForm ? 'Close Editor' : 'Publish Notice'}
-        </button>
+        {/* Publish post CTA - only for users who can post */}
+        {canPost && (
+          <button
+            onClick={() => setShowForm(!showForm)}
+            className="primary-btn rounded-xl py-3 px-5 text-xs font-bold uppercase tracking-widest flex items-center justify-center gap-2"
+          >
+            <span className="material-symbols-outlined text-[16px]">rate_review</span>
+            {showForm ? 'Close Editor' : 'Publish Notice'}
+          </button>
+        )}
       </div>
 
       {/* Write Post Box */}
@@ -301,8 +328,13 @@ export const Community: React.FC = () => {
               <div className="flex items-center gap-6 border-t border-white/10 pt-4 mt-2">
                 <button
                   onClick={() => handleUpvote(post.id)}
-                  className={`flex items-center gap-1.5 text-xs font-mono font-bold cursor-pointer transition-colors ${
-                    post.hasUpvoted ? 'text-primary-container' : 'text-white/50 hover:text-white'
+                  disabled={!canUpvote}
+                  className={`flex items-center gap-1.5 text-xs font-mono font-bold transition-colors ${
+                    !canUpvote
+                      ? 'text-white/30 cursor-not-allowed'
+                      : post.hasUpvoted
+                        ? 'text-primary-container cursor-pointer'
+                        : 'text-white/50 hover:text-white cursor-pointer'
                   }`}
                 >
                   <span className="material-symbols-outlined text-[18px]" style={{ fontVariationSettings: post.hasUpvoted ? "'FILL' 1" : "'FILL' 0" }}>
@@ -318,6 +350,18 @@ export const Community: React.FC = () => {
                   <span className="material-symbols-outlined text-[18px]">chat_bubble</span>
                   <span>{post.commentsCount} COMMENTS</span>
                 </button>
+
+                {/* Moderator delete button */}
+                {canDeletePost && (
+                  <button
+                    onClick={() => handleDeletePost(post.id)}
+                    className="ml-auto flex items-center gap-1.5 text-xs font-mono font-bold text-error/60 hover:text-error cursor-pointer transition-colors"
+                    title="Remove post (Moderator action)"
+                  >
+                    <span className="material-symbols-outlined text-[16px]">remove_moderator</span>
+                    Remove
+                  </button>
+                )}
               </div>
 
               {/* Comments Section */}
@@ -340,21 +384,28 @@ export const Community: React.FC = () => {
                     </div>
                   ))}
 
-                  <div className="flex gap-2 mt-2">
-                    <input
-                      type="text"
-                      placeholder="Write a comment..."
-                      value={newCommentText}
-                      onChange={(e) => setNewCommentText(e.target.value)}
-                      className="input-glass px-3 py-2 rounded-xl text-xs w-full font-mono uppercase tracking-wider"
-                    />
-                    <button
-                      onClick={() => handleAddComment(post.id)}
-                      className="btn-gradient-cyan px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest cursor-pointer"
-                    >
-                      Post
-                    </button>
-                  </div>
+                  {/* Comment input - only for users who can participate */}
+                  {canPost ? (
+                    <div className="flex gap-2 mt-2">
+                      <input
+                        type="text"
+                        placeholder="Write a comment..."
+                        value={newCommentText}
+                        onChange={(e) => setNewCommentText(e.target.value)}
+                        className="input-glass px-3 py-2 rounded-xl text-xs w-full font-mono uppercase tracking-wider"
+                      />
+                      <button
+                        onClick={() => handleAddComment(post.id)}
+                        className="btn-gradient-cyan px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest cursor-pointer"
+                      >
+                        Post
+                      </button>
+                    </div>
+                  ) : (
+                    <p className="text-[10px] font-mono text-white/30 uppercase tracking-widest text-center py-2">
+                      Log in to participate in discussions
+                    </p>
+                  )}
                 </div>
               )}
 

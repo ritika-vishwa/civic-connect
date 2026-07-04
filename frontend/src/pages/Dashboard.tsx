@@ -5,8 +5,10 @@ import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { useIssues } from '../context/IssueContext';
+import { useAuth } from '../context/AuthContext';
 import { GlassCard } from '../components/ui/GlassCard';
 import { StatusBadge } from '../components/ui/StatusBadge';
+import { canViewAnalytics } from '../context/permissions';
 
 // Fixed leaflet icon issue in production/bundlers
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
@@ -21,7 +23,8 @@ L.Marker.prototype.options.icon = DefaultIcon;
 
 export const Dashboard: React.FC = () => {
   const navigate = useNavigate();
-  const { issues } = useIssues();
+  const { issues, loading } = useIssues();
+  const { user } = useAuth();
 
   // Calculate metrics
   const totalReports = issues.length;
@@ -35,13 +38,13 @@ export const Dashboard: React.FC = () => {
   }, {} as Record<string, number>);
 
   const chartData = Object.keys(categoryCounts).map(cat => ({
-    name: cat.substring(0, 5), // Shorten for labels
+    name: cat.substring(0, 5),
     fullName: cat,
     Count: categoryCounts[cat]
   }));
 
   // Activity events (compiled from issue history)
-  const allHistory = issues.flatMap(issue => 
+  const allHistory = issues.flatMap(issue =>
     issue.history.map(h => ({
       ...h,
       issueId: issue.id,
@@ -51,6 +54,28 @@ export const Dashboard: React.FC = () => {
   ).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
   const recentHistory = allHistory.slice(0, 4);
+
+  const showAnalytics = canViewAnalytics(user);
+
+  if (loading) {
+    return (
+      <div className="flex flex-col gap-8 w-full">
+        <div className="border-b border-white/10 pb-6">
+          <div className="h-10 w-72 skeleton-shimmer rounded-xl mb-3"></div>
+          <div className="h-3 w-80 skeleton-shimmer rounded"></div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-gutter">
+          {[0, 1, 2].map(i => (
+            <div key={i} className="col-span-1 md:col-span-4 h-36 rounded-2xl border border-white/5 skeleton-shimmer"></div>
+          ))}
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-gutter">
+          <div className="col-span-1 lg:col-span-7 h-96 rounded-2xl border border-white/5 skeleton-shimmer"></div>
+          <div className="col-span-1 lg:col-span-5 h-96 rounded-2xl border border-white/5 skeleton-shimmer"></div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-8 w-full">
@@ -144,12 +169,14 @@ export const Dashboard: React.FC = () => {
         <div className="col-span-1 lg:col-span-7 glass-card rounded-2xl p-6 md:p-8 flex flex-col min-h-[450px] animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
           <div className="flex justify-between items-center mb-6">
             <h3 className="font-display-lg text-xl font-black text-white uppercase tracking-tight">Issue Breakdown</h3>
-            <button 
-              onClick={() => navigate('/analytics')}
-              className="text-primary-container hover:text-white transition-colors text-xs font-bold uppercase tracking-widest flex items-center gap-2 bg-primary-container/10 px-4 py-2 rounded-lg border border-primary-container/30"
-            >
-              Advanced Analytics <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
-            </button>
+            {showAnalytics && (
+              <button
+                onClick={() => navigate('/analytics')}
+                className="text-primary-container hover:text-white transition-colors text-xs font-bold uppercase tracking-widest flex items-center gap-2 bg-primary-container/10 px-4 py-2 rounded-lg border border-primary-container/30"
+              >
+                Advanced Analytics <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
+              </button>
+            )}
           </div>
           <div className="flex-1 w-full min-h-[300px]">
             <ResponsiveContainer width="100%" height="100%">

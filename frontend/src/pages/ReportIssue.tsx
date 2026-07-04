@@ -10,6 +10,7 @@ import { GlassCard } from '../components/ui/GlassCard';
 import { AIResultCard } from '../components/ui/AIResultCard';
 import confetti from 'canvas-confetti';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { canReportIssue } from '../context/permissions';
 
 // Map marker pinner helper
 const MapEventsHelper = ({ onPin }: { onPin: (latlng: L.LatLng) => void }) => {
@@ -26,6 +27,25 @@ export const ReportIssue: React.FC = () => {
   const { addIssue, issues, supportIssue } = useIssues();
   const { showToast } = useNotification();
   const { user } = useAuth();
+
+  // Permission guard — officials cannot report issues
+  if (user && !canReportIssue(user)) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-6 text-center animate-fade-in-up">
+        <span className="material-symbols-outlined text-[64px] text-amber-400 drop-shadow-[0_0_20px_rgba(251,191,36,0.5)]">gavel</span>
+        <h2 className="font-display-lg text-2xl font-black text-white uppercase tracking-wider">Access Restricted</h2>
+        <p className="text-white/60 text-xs font-mono uppercase tracking-widest max-w-sm">
+          Municipal Officials cannot submit civic reports. Use the Officer Workspace to manage and update existing complaints.
+        </p>
+        <button
+          onClick={() => navigate('/officer')}
+          className="btn-gradient-cyan px-6 py-3 rounded-xl text-xs font-bold uppercase tracking-widest cursor-pointer"
+        >
+          Go to Officer Workspace
+        </button>
+      </div>
+    );
+  }
 
   // Wizard state: 1 = Details, 2 = AI Analysis, 3 = Review
   const [step, setStep] = useState<1 | 2 | 3>(1);

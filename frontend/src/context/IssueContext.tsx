@@ -72,6 +72,7 @@ export interface Issue {
 
 interface IssueContextProps {
   issues: Issue[];
+  loading: boolean;
   addIssue: (issueData: Omit<Issue, 'id' | 'createdAt' | 'supportCount' | 'isSupportedByCurrentUser' | 'comments' | 'history' | 'status' | 'supportedBy'>) => Promise<string>;
   supportIssue: (id: string) => Promise<void>;
   addComment: (id: string, commentText: string, user: { name: string; avatar: string; role: UserRole }) => Promise<void>;
@@ -88,6 +89,7 @@ export const IssueProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [issues, setIssues] = useState<Issue[]>([]);
   const [rawIssues, setRawIssues] = useState<any[]>([]);
   const [comments, setComments] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
   // Real-time listener for issues
   useEffect(() => {
@@ -98,8 +100,10 @@ export const IssueProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         ...doc.data()
       }));
       setRawIssues(fetchedIssues);
+      setLoading(false);
     }, (error) => {
       console.error("Firestore Issues Error: ", error);
+      setLoading(false);
     });
     return () => unsubscribe();
   }, []);
@@ -333,7 +337,7 @@ export const IssueProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   return (
-    <IssueContext.Provider value={{ issues, addIssue, supportIssue, addComment, updateStatus, assignWorker, deleteIssue, updateIssue }}>
+    <IssueContext.Provider value={{ issues, loading, addIssue, supportIssue, addComment, updateStatus, assignWorker, deleteIssue, updateIssue }}>
       {children}
     </IssueContext.Provider>
   );

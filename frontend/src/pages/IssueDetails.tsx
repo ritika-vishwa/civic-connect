@@ -11,19 +11,46 @@ import { StatusBadge } from '../components/ui/StatusBadge';
 import { Timeline } from '../components/ui/Timeline';
 import { ConfirmModal } from '../components/ui/ConfirmModal';
 import { EditIssueModal } from '../components/ui/EditIssueModal';
+import {
+  canEditOwnIssue,
+  canDeleteOwnIssue,
+  canSupportIssue,
+  canParticipateInDiscussions,
+} from '../context/permissions';
 
 export const IssueDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { issues, supportIssue, addComment, deleteIssue, updateIssue } = useIssues();
+  const { issues, loading, supportIssue, addComment, deleteIssue, updateIssue } = useIssues();
   const { user } = useAuth();
   const { showToast } = useNotification();
+
 
   const [commentText, setCommentText] = useState('');
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
 
   const issue = issues.find((i) => i.id === id);
+
+  // Show skeleton while Firestore is still fetching
+  if (loading && !issue) {
+    return (
+      <div className="flex flex-col gap-8 w-full">
+        <div className="w-full h-80 rounded-2xl skeleton-shimmer border border-white/5"></div>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-gutter">
+          <div className="col-span-1 lg:col-span-8 flex flex-col gap-4">
+            <div className="h-32 rounded-2xl skeleton-shimmer border border-white/5"></div>
+            <div className="h-48 rounded-2xl skeleton-shimmer border border-white/5"></div>
+            <div className="h-64 rounded-2xl skeleton-shimmer border border-white/5"></div>
+          </div>
+          <div className="col-span-1 lg:col-span-4 flex flex-col gap-4">
+            <div className="h-48 rounded-2xl skeleton-shimmer border border-white/5"></div>
+            <div className="h-32 rounded-2xl skeleton-shimmer border border-white/5"></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (!issue) {
     return (
@@ -67,8 +94,10 @@ export const IssueDetails: React.FC = () => {
     showToast('Official comment posted!', 'success');
   };
 
-  const canEdit = (issue.authorId && issue.authorId === user?.uid) || (!issue.authorId && issue.citizenName === user?.name);
-  const canDelete = user?.role === 'admin' || canEdit;
+  const canEdit = canEditOwnIssue(user, issue);
+  const canDelete = canDeleteOwnIssue(user, issue);
+  const canSupport = canSupportIssue(user);
+  const canComment = canParticipateInDiscussions(user);
 
   const handleDeleteConfirm = async () => {
     try {
@@ -164,10 +193,14 @@ export const IssueDetails: React.FC = () => {
             )}
             <button
               onClick={handleSupport}
-              className={`px-5 py-3 rounded-xl text-xs font-bold uppercase tracking-widest border transition-all flex items-center gap-2 cursor-pointer shrink-0 ${
-                issue.isSupportedByCurrentUser
-                  ? 'bg-primary-container text-black border-primary-container shadow-[0_0_20px_rgba(0,240,255,0.4)]'
-                  : 'btn-glass text-white'
+              disabled={!canSupport}
+              title={!canSupport ? 'Log in to endorse this report' : ''}
+              className={`px-5 py-3 rounded-xl text-xs font-bold uppercase tracking-widest border transition-all flex items-center gap-2 shrink-0 ${
+                !canSupport
+                  ? 'opacity-40 cursor-not-allowed bg-white/5 border-white/10 text-white/50'
+                  : issue.isSupportedByCurrentUser
+                    ? 'bg-primary-container text-black border-primary-container shadow-[0_0_20px_rgba(0,240,255,0.4)] cursor-pointer'
+                    : 'btn-glass text-white cursor-pointer'
               }`}
             >
               <span className="material-symbols-outlined text-[18px]">thumb_up</span>
@@ -252,8 +285,8 @@ export const IssueDetails: React.FC = () => {
               )}
             </div>
 
-            {/* Post Comment Input */}
-            {user && (
+            {/* Post Comment Input - only for logged-in users who can participate */}
+            {canComment && (
               <form onSubmit={handlePostComment} className="flex gap-2 border-t border-white/10 pt-4">
                 <input
                   type="text"

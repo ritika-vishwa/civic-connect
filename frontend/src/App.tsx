@@ -52,7 +52,14 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
 
 // Role-Based Route Wrapper
 const RoleRoute: React.FC<{ children: React.ReactNode; allowedRoles: UserRole[] }> = ({ children, allowedRoles }) => {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
+  if (loading) {
+    return (
+      <div className="fixed inset-0 bg-[#031427] flex items-center justify-center">
+        <div className="w-10 h-10 rounded-full border-2 border-primary-container border-t-transparent animate-spin"></div>
+      </div>
+    );
+  }
   if (!user || !allowedRoles.includes(user.role)) {
     return <Navigate to="/dashboard" replace />;
   }
@@ -89,7 +96,7 @@ export const App: React.FC = () => {
               {/* Standard Operational Routes wrapped in DashboardLayout */}
               <Route element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
                 <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/analytics" element={<Analytics />} />
+                <Route path="/analytics" element={<RoleRoute allowedRoles={['official', 'moderator', 'admin']}><Analytics /></RoleRoute>} />
                 <Route path="/community" element={<Community />} />
                 <Route path="/events" element={<Events />} />
                 <Route path="/notifications" element={<Notifications />} />

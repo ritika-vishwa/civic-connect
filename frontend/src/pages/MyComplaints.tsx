@@ -6,7 +6,7 @@ import { CustomSelect } from '../components/ui/CustomSelect';
 import { GlassCard } from '../components/ui/GlassCard';
 
 export const MyComplaints: React.FC = () => {
-  const { issues } = useIssues();
+  const { issues, loading } = useIssues();
   const { user } = useAuth();
 
   const [query, setQuery] = useState('');
@@ -17,6 +17,29 @@ export const MyComplaints: React.FC = () => {
   const [isListView, setIsListView] = useState(true);
 
   if (!user) return null;
+
+  // Show skeleton while Firestore is loading
+  if (loading) {
+    return (
+      <div className="flex flex-col gap-8 w-full">
+        <div className="border-b border-white/10 pb-6">
+          <div className="h-10 w-64 rounded-xl skeleton-shimmer mb-3"></div>
+          <div className="h-3 w-96 rounded skeleton-shimmer"></div>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-gutter">
+          {[0, 1, 2].map(i => (
+            <div key={i} className="h-20 rounded-2xl border border-white/5 skeleton-shimmer"></div>
+          ))}
+        </div>
+        <div className="h-32 rounded-2xl border border-white/5 skeleton-shimmer"></div>
+        <div className="flex flex-col gap-4">
+          {[0, 1, 2, 3].map(i => (
+            <div key={i} className="h-28 rounded-2xl border border-white/5 skeleton-shimmer" style={{ opacity: 1 - i * 0.2 }}></div>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   // Filter issues filed by this user (Jane Doe is our citizen, others can see all or their own)
   const myIssues = issues.filter(

@@ -8,6 +8,7 @@ import { useNotification } from '../context/NotificationContext';
 import { GlassCard } from '../components/ui/GlassCard';
 import { StatusBadge } from '../components/ui/StatusBadge';
 import { CustomSelect } from '../components/ui/CustomSelect';
+import { canUpdateIssueStatus, canAssignWorkers } from '../context/permissions';
 
 export const OfficerWorkspace: React.FC = () => {
   const { issues, updateStatus, assignWorker } = useIssues();
@@ -15,8 +16,10 @@ export const OfficerWorkspace: React.FC = () => {
   const { showToast } = useNotification();
 
   const [selectedIssueId, setSelectedIssueId] = useState<string | null>(issues[0]?.id || null);
-  const [filterDepartment, setFilterDepartment] = useState<string>('All');
-  
+  // Filters logic — officers see only their department by default
+  const defaultDept = user?.role === 'official' && user?.department ? user.department : 'All';
+  const [filterDepartment, setFilterDepartment] = useState<string>(defaultDept);
+
   // Update inputs
   const [statusVal, setStatusVal] = useState<Issue['status']>('In Progress');
   const [updateText, setUpdateText] = useState('');
@@ -32,16 +35,15 @@ export const OfficerWorkspace: React.FC = () => {
   // Workers mock data
   const workers = ['Robert Carter', 'Lisa Wong', 'David Brooks', 'Sarah Jenkins', 'Marcus Vance'];
 
-  // Filters logic
   const filtered = issues.filter(issue => {
-    // If officer has a department, default filter to it
-
     const dept = filterDepartment === 'All' ? 'All' : filterDepartment;
-    
     const matchesDept = dept === 'All' || issue.department === dept;
-    const isNotResolved = issue.status !== 'Resolved';
-    return matchesDept && isNotResolved;
+    const isNotClosed = issue.status !== 'Closed';
+    return matchesDept && isNotClosed;
   });
+
+  const canUpdateActive = canUpdateIssueStatus(user, activeIssue);
+  const canAssign = canAssignWorkers(user);
 
   const handleUpdateStatusSubmit = (e: React.FormEvent) => {
     e.preventDefault();

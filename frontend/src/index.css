@@ -239,3 +239,86 @@ html.light .leaflet-tile {
   filter: none !important;
 }
 
+/* ─── Animations ──────────────────────────────────────────────── */
+
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0);    }
+}
+
+@keyframes fade-in-right {
+  from { opacity: 0; transform: translateX(-16px); }
+  to   { opacity: 1; transform: translateX(0);     }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0;  }
+}
+
+@keyframes slide-down {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0);    }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.animate-fade-in-right {
+  animation: fade-in-right 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.animate-fade-in {
+  animation: fade-in 0.3s ease both;
+}
+
+.animate-slide-down {
+  animation: slide-down 0.25s ease both;
+}
+
+/* Shimmer skeleton loader */
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.03) 0%,
+    rgba(0, 240, 255, 0.06) 50%,
+    rgba(255, 255, 255, 0.03) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.8s infinite linear;
+}
+
+/* Focus ring for accessibility */
+*:focus-visible {
+  outline: 2px solid rgba(0, 240, 255, 0.7);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Smooth page transitions via view transitions API */
+::view-transition-old(root) {
+  animation: 200ms ease both fade-out;
+}
+::view-transition-new(root) {
+  animation: 300ms ease both fade-in-up;
+}
+
+@keyframes fade-out {
+  to { opacity: 0; }
+}
+
+/* Interactive element baseline — ensure cursor:pointer everywhere clickable */
+button, [role="button"], a {
+  cursor: pointer;
+}
+
+/* Disabled states */
+button:disabled {
+  cursor: not-allowed;
+}
