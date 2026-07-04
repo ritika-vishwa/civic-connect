@@ -34,7 +34,7 @@ export const Analytics: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end border-b border-white/10 pb-6 animate-fade-in-up">
         <div>
-          <h2 className="font-display-lg text-4xl md:text-5xl font-black text-white uppercase tracking-tight drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]">
+          <h2 className="font-display-lg text-4xl md:text-5xl font-black text-white uppercase tracking-normal drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]">
             AI Insights Command
           </h2>
           <p className="text-on-surface-variant font-body-lg text-body-lg max-w-2xl mt-2 leading-relaxed">
@@ -93,7 +93,7 @@ export const Analytics: React.FC = () => {
         
         {/* Large Time Series area */}
         <div className="col-span-1 lg:col-span-8 glass-card rounded-2xl p-6 md:p-8 flex flex-col min-h-[400px] animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
-          <h3 className="font-display-lg text-lg font-black text-white uppercase tracking-tight mb-6">Activity Timeline Dynamics</h3>
+          <h3 className="font-display-lg text-lg font-black text-white uppercase tracking-normal mb-6">Activity Timeline Dynamics</h3>
           <div className="flex-1 w-full min-h-[280px]">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={timeSeriesData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
@@ -122,7 +122,7 @@ export const Analytics: React.FC = () => {
 
         {/* Category Share Donut */}
         <div className="col-span-1 lg:col-span-4 glass-card rounded-2xl p-6 md:p-8 flex flex-col items-center justify-between min-h-[400px] animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
-          <h3 className="font-display-lg text-lg font-black text-white uppercase tracking-tight w-full text-left mb-4">Category Spread</h3>
+          <h3 className="font-display-lg text-lg font-black text-white uppercase tracking-normal w-full text-left mb-4">Category Spread</h3>
           <div className="w-full h-52 relative flex justify-center items-center">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
