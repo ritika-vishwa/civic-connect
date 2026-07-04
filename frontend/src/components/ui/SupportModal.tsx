@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext';
 import { useNotification } from '../../context/NotificationContext';
+import { db } from '../../firebase';
+import { collection, addDoc } from 'firebase/firestore';
 
 export const SupportModal: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -23,18 +25,14 @@ export const SupportModal: React.FC = () => {
 
     setIsSubmitting(true);
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/support/contact`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: user?.name || 'Anonymous User',
-          email: user?.email || 'No email provided',
-          subject,
-          message
-        })
+      await addDoc(collection(db, 'support_tickets'), {
+        name: user?.name || 'Anonymous User',
+        email: user?.email || 'No email provided',
+        subject,
+        message,
+        createdAt: new Date().toISOString(),
+        status: 'pending'
       });
-
-      if (!response.ok) throw new Error('Failed to send support ticket');
       
       showToast('Support ticket sent! The admins will review it shortly.', 'success');
       setIsOpen(false);
