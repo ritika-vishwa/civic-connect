@@ -24,7 +24,11 @@ export const OfficialDashboard: React.FC = () => {
 
   const recentlyResolved = deptIssues
     .filter(i => i.status === 'Resolved')
-    .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+    .sort((a, b) => {
+      const aTime = a.history.length > 0 ? new Date(a.history[a.history.length - 1].createdAt).getTime() : new Date(a.createdAt).getTime();
+      const bTime = b.history.length > 0 ? new Date(b.history[b.history.length - 1].createdAt).getTime() : new Date(b.createdAt).getTime();
+      return bTime - aTime;
+    })
     .slice(0, 3);
 
   if (loading) {
@@ -177,12 +181,17 @@ export const OfficialDashboard: React.FC = () => {
             <div className="mt-4 p-4 border border-white/10 rounded-xl bg-white/5">
               <h4 className="font-bold text-white uppercase tracking-widest text-xs mb-3">Recently Resolved</h4>
               <div className="flex flex-col gap-3">
-                {recentlyResolved.map(issue => (
-                  <div key={issue.id} className="flex justify-between items-center text-xs font-mono">
-                    <span className="text-white/70 line-clamp-1 flex-1">{issue.title}</span>
-                    <span className="text-primary-container shrink-0 ml-2">{new Date(issue.updatedAt).toLocaleDateString()}</span>
-                  </div>
-                ))}
+                {recentlyResolved.map(issue => {
+                  const resolvedDate = issue.history.length > 0 
+                    ? new Date(issue.history[issue.history.length - 1].createdAt).toLocaleDateString()
+                    : new Date(issue.createdAt).toLocaleDateString();
+                  return (
+                    <div key={issue.id} className="flex justify-between items-center text-xs font-mono">
+                      <span className="text-white/70 line-clamp-1 flex-1">{issue.title}</span>
+                      <span className="text-primary-container shrink-0 ml-2">{resolvedDate}</span>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </div>
