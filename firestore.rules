@@ -160,5 +160,15 @@ service cloud.firestore {
       allow update: if isSignedIn() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isRead']);
       allow delete: if isAdmin();
     }
+
+    // ─── Support Tickets Collection ───────────────────────────────────────────
+
+    match /support_tickets/{ticketId} {
+      // Only admins can read, update, or delete support tickets
+      allow read, update, delete: if isAdmin();
+      
+      // Anyone can submit a support ticket (authenticated or not)
+      allow create: if true;
+    }
   }
 }
