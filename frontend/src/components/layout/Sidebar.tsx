@@ -134,7 +134,10 @@ export const Sidebar: React.FC = () => {
         </NavLink>
         <a
           href="#support"
-          onClick={(e) => { e.preventDefault(); }}
+          onClick={(e) => { 
+            e.preventDefault(); 
+            window.dispatchEvent(new Event('open-command-palette'));
+          }}
           className="text-white/70 hover:text-white hover:bg-white/5 rounded-xl px-4 py-3 flex items-center gap-3 font-label-caps text-label-caps uppercase tracking-widest transition-all"
         >
           <span className="material-symbols-outlined">help</span>

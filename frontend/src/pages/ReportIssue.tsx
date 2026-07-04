@@ -168,28 +168,67 @@ export const ReportIssue: React.FC = () => {
     }
   };
 
-  const handleImageDrop = (e: React.DragEvent) => {
+  const compressImage = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (event) => {
+        const img = new Image();
+        img.src = event.target?.result as string;
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const MAX_WIDTH = 800;
+          const MAX_HEIGHT = 800;
+          let width = img.width;
+          let height = img.height;
+
+          if (width > height) {
+            if (width > MAX_WIDTH) {
+              height *= MAX_WIDTH / width;
+              width = MAX_WIDTH;
+            }
+          } else {
+            if (height > MAX_HEIGHT) {
+              width *= MAX_HEIGHT / height;
+              height = MAX_HEIGHT;
+            }
+          }
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx?.drawImage(img, 0, 0, width, height);
+          resolve(canvas.toDataURL('image/jpeg', 0.7));
+        };
+        img.onerror = (error) => reject(error);
+      };
+      reader.onerror = (error) => reject(error);
+    });
+  };
+
+  const handleImageDrop = async (e: React.DragEvent) => {
     e.preventDefault();
     const file = e.dataTransfer.files[0];
     if (file && file.type.startsWith('image/')) {
-      const reader = new FileReader();
-      reader.onload = () => {
-        setImage(reader.result as string);
-        simulateAiImageAnalysis(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+      try {
+        const compressedBase64 = await compressImage(file);
+        setImage(compressedBase64);
+        simulateAiImageAnalysis(compressedBase64);
+      } catch (err) {
+        showToast('Failed to process image', 'error');
+      }
     }
   };
 
-  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onload = () => {
-        setImage(reader.result as string);
-        simulateAiImageAnalysis(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+      try {
+        const compressedBase64 = await compressImage(file);
+        setImage(compressedBase64);
+        simulateAiImageAnalysis(compressedBase64);
+      } catch (err) {
+        showToast('Failed to process image', 'error');
+      }
     }
   };
 
@@ -574,11 +613,37 @@ export const ReportIssue: React.FC = () => {
                 </MapContainer>
 
                 {/* Floating Info Coordinate Overlay */}
-                <div className="absolute bottom-4 left-4 z-20 pointer-events-none">
+                <div className="absolute bottom-4 left-4 z-20 pointer-events-none flex flex-col gap-2">
                   <div className="bg-[#00060d]/80 backdrop-blur-md px-3 py-1.5 rounded border border-primary-container/40 text-[9px] font-mono text-primary-container font-semibold uppercase">
                     {address}
                   </div>
                 </div>
+
+                {/* Locate Me Button */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (navigator.geolocation) {
+                      showToast('Requesting satellite telemetry...', 'info');
+                      navigator.geolocation.getCurrentPosition(
+                        (position) => {
+                          const latlng = new L.LatLng(position.coords.latitude, position.coords.longitude);
+                          setPin(latlng);
+                          setAddress(`Current Location: ${latlng.lat.toFixed(4)}, ${latlng.lng.toFixed(4)}`);
+                          showToast('Location locked via GPS', 'success');
+                        },
+                        (error) => showToast('Failed to retrieve location', 'error'),
+                        { enableHighAccuracy: true }
+                      );
+                    } else {
+                      showToast('Geolocation is not supported', 'error');
+                    }
+                  }}
+                  className="absolute top-4 right-4 z-[400] bg-primary-container/20 hover:bg-primary-container/40 text-primary-container border border-primary-container/50 px-3 py-2 rounded-lg backdrop-blur-md flex items-center gap-2 cursor-pointer transition-colors shadow-[0_0_15px_rgba(0,240,255,0.3)]"
+                >
+                  <span className="material-symbols-outlined text-[16px]">my_location</span>
+                  <span className="text-[9px] font-bold uppercase tracking-widest font-mono">Locate Me</span>
+                </button>
               </div>
             </div>
 

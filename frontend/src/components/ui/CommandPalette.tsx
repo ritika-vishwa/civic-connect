@@ -23,8 +23,14 @@ export const CommandPalette: React.FC = () => {
       }
     };
 
+    const handleOpen = () => setIsOpen(true);
+
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener('open-command-palette', handleOpen);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('open-command-palette', handleOpen);
+    };
   }, []);
 
   const handleAction = (callback: () => void) => {
@@ -73,14 +79,23 @@ export const CommandPalette: React.FC = () => {
 
   return (
     <>
-      {/* Keyboard reminder tag (bottom left) */}
-      <div className="fixed bottom-6 left-6 z-40 hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-lg glass-card border border-white/10 text-[10px] font-mono text-white/50 uppercase tracking-widest pointer-events-none">
-        <span>Press</span>
-        <kbd className="bg-white/10 px-1.5 py-0.5 rounded border border-white/20 text-white">Ctrl</kbd>
-        <span>+</span>
-        <kbd className="bg-white/10 px-1.5 py-0.5 rounded border border-white/20 text-white">K</kbd>
-        <span>to search</span>
-      </div>
+      {/* Discrete Keyboard shortcut icon */}
+      <button 
+        onClick={() => setIsOpen(true)}
+        className="fixed bottom-6 left-6 z-40 hidden md:flex items-center justify-center w-10 h-10 rounded-full glass-card border border-white/10 text-white/50 hover:text-white hover:bg-white/10 transition-colors group shadow-lg cursor-pointer"
+      >
+        <span className="material-symbols-outlined text-[20px]">search</span>
+        
+        {/* Hover Tooltip */}
+        <div className="absolute left-14 bg-[#00060d] border border-white/20 px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none flex items-center gap-2 whitespace-nowrap shadow-xl">
+          <span className="text-[10px] font-mono uppercase tracking-widest text-white/70">Search / Navigate</span>
+          <div className="flex items-center gap-1">
+            <kbd className="bg-white/10 px-1.5 py-0.5 rounded border border-white/20 text-[9px] text-white font-mono">Ctrl</kbd>
+            <span className="text-[9px] text-white/50">+</span>
+            <kbd className="bg-white/10 px-1.5 py-0.5 rounded border border-white/20 text-[9px] text-white font-mono">K</kbd>
+          </div>
+        </div>
+      </button>
 
       <AnimatePresence>
         {isOpen && (
