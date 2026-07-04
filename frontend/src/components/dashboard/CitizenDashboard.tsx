@@ -1,5 +1,7 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
+import { db } from '../../firebase';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -21,6 +23,17 @@ export const CitizenDashboard: React.FC = () => {
   const navigate = useNavigate();
   const { issues, loading } = useIssues();
   const { user } = useAuth();
+  const [civicAlerts, setCivicAlerts] = useState<any[]>([]);
+
+  useEffect(() => {
+    const q = query(collection(db, 'emergency_alerts'), orderBy('createdAt', 'desc'));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      setCivicAlerts(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    }, (err) => {
+      console.error("Failed to fetch emergency alerts for dashboard:", err);
+    });
+    return () => unsubscribe();
+  }, []);
 
   const myIssues = issues.filter((issue) => {
     if (issue.authorId && issue.authorId === user?.uid) return true;
@@ -262,6 +275,65 @@ export const CitizenDashboard: React.FC = () => {
                         </span>
                         <StatusBadge value={historyItem.status} type="status" />
                       </div>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Emergency Civic Announcements Feed */}
+      <div className="animate-fade-in-up mt-6" style={{ animationDelay: '0.7s' }}>
+        <div className="glass-card rounded-2xl p-6 md:p-8 border border-white/10">
+          <h3 className="font-display-lg text-xl font-black text-white uppercase tracking-tight flex items-center gap-3 mb-6 border-b border-primary-container/20 pb-4">
+            <span className="material-symbols-outlined text-error text-2xl drop-shadow-[0_0_8px_#ffb4ab]">campaign</span>
+            Emergency Civic Broadcast Feed
+          </h3>
+          
+          <div className="flex flex-col gap-4 max-h-[400px] overflow-y-auto pr-2">
+            {civicAlerts.length === 0 ? (
+              <div className="text-center py-8 text-white/40 font-mono text-xs border border-white/5 border-dashed rounded-xl">
+                No emergency alerts or announcements broadcasted.
+              </div>
+            ) : (
+              civicAlerts.map(alert => {
+                const dateString = new Date(alert.createdAt).toLocaleString(undefined, {
+                  month: 'short',
+                  day: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit'
+                });
+                
+                let badgeClass = 'bg-primary-container/20 text-primary-container';
+                if (alert.severity === 'critical') badgeClass = 'bg-error/20 text-error border border-error/30';
+                else if (alert.severity === 'warning') badgeClass = 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/20';
+
+                return (
+                  <div key={alert.id} className="p-4 rounded-xl bg-white/5 border border-white/5 flex flex-col gap-2 hover:bg-white/10 transition-colors">
+                    <div className="flex flex-wrap justify-between items-start gap-2">
+                      <div className="flex items-center gap-2">
+                        <span className={`px-2.5 py-0.5 rounded-md text-[9px] uppercase font-mono font-bold tracking-widest ${badgeClass}`}>
+                          {alert.severity}
+                        </span>
+                        <span className="px-2 py-0.5 rounded-md text-[9px] uppercase font-mono font-bold tracking-widest bg-white/10 text-white/80 border border-white/20">
+                          {alert.type.replace('_', ' ')}
+                        </span>
+                      </div>
+                      <span className="text-[10px] font-mono text-white/40">{dateString}</span>
+                    </div>
+                    
+                    <h4 className="text-sm font-bold text-white uppercase tracking-wide mt-1">
+                      {alert.title}
+                    </h4>
+                    <p className="text-xs text-white/70 font-light leading-relaxed">
+                      {alert.description}
+                    </p>
+                    
+                    <div className="flex flex-wrap justify-between items-center gap-2 mt-2 pt-2 border-t border-white/5 text-[9px] font-mono text-white/40">
+                      <span>AFFECTED AREAS: <strong className="text-white/70">{alert.affectedAreas || 'CITY-WIDE'}</strong></span>
+                      <span>ISSUED BY: <strong className="text-white/70">{alert.authorName}</strong></span>
                     </div>
                   </div>
                 );

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip } from 'recharts';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
@@ -7,6 +7,7 @@ import 'leaflet/dist/leaflet.css';
 import { useIssues } from '../../context/IssueContext';
 import { useAuth } from '../../context/AuthContext';
 import { StatusBadge } from '../ui/StatusBadge';
+import { BroadcastAlertModal } from '../ui/BroadcastAlertModal';
 
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
@@ -22,6 +23,7 @@ export const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
   const { issues, loading } = useIssues();
   const { user } = useAuth();
+  const [isAlertModalOpen, setIsAlertModalOpen] = useState(false);
 
   const totalReports = issues.length;
   const resolvedCount = issues.filter(i => i.status === 'Resolved').length;
@@ -196,9 +198,20 @@ export const AdminDashboard: React.FC = () => {
               </div>
               <span className="material-symbols-outlined text-primary-container">map</span>
             </button>
+            <button onClick={() => setIsAlertModalOpen(true)} className="w-full text-left bg-error/10 hover:bg-error/25 border border-error/30 hover:border-error p-4 rounded-xl transition-all cursor-pointer group flex items-center justify-between">
+              <div>
+                <h4 className="font-bold text-error uppercase tracking-widest text-sm group-hover:text-white transition-colors">Broadcast Emergency Alert</h4>
+                <p className="text-xs text-white/50 font-mono mt-1">Send a city-wide announcement regarding civic closures/emergencies.</p>
+              </div>
+              <span className="material-symbols-outlined text-error">campaign</span>
+            </button>
           </div>
         </div>
       </div>
+      <BroadcastAlertModal 
+        isOpen={isAlertModalOpen} 
+        onClose={() => setIsAlertModalOpen(false)} 
+      />
     </div>
   );
 };

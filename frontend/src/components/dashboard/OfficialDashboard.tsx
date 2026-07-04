@@ -1,13 +1,15 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useIssues } from '../../context/IssueContext';
 import { useAuth } from '../../context/AuthContext';
 import { StatusBadge } from '../ui/StatusBadge';
+import { BroadcastAlertModal } from '../ui/BroadcastAlertModal';
 
 export const OfficialDashboard: React.FC = () => {
   const navigate = useNavigate();
   const { issues, loading } = useIssues();
   const { user } = useAuth();
+  const [isAlertModalOpen, setIsAlertModalOpen] = useState(false);
 
 
   // Since officials should only see their department's issues (or all if not specified)
@@ -177,6 +179,14 @@ export const OfficialDashboard: React.FC = () => {
               </div>
               <span className="material-symbols-outlined text-primary-container">chevron_right</span>
             </button>
+
+            <button onClick={() => setIsAlertModalOpen(true)} className="w-full text-left bg-error/10 hover:bg-error/20 border border-error/30 hover:border-error p-4 rounded-xl transition-all cursor-pointer group flex items-center justify-between">
+              <div>
+                <h4 className="font-bold text-error uppercase tracking-widest text-sm group-hover:text-white transition-colors">Broadcast Emergency Alert</h4>
+                <p className="text-xs text-white/50 font-mono mt-1">Send a city-wide announcement regarding civic closures/emergencies.</p>
+              </div>
+              <span className="material-symbols-outlined text-error">campaign</span>
+            </button>
             
             <div className="mt-4 p-4 border border-white/10 rounded-xl bg-white/5">
               <h4 className="font-bold text-white uppercase tracking-widest text-xs mb-3">Recently Resolved</h4>
@@ -197,6 +207,10 @@ export const OfficialDashboard: React.FC = () => {
           </div>
         </div>
       </div>
+      <BroadcastAlertModal 
+        isOpen={isAlertModalOpen} 
+        onClose={() => setIsAlertModalOpen(false)} 
+      />
     </div>
   );
 };

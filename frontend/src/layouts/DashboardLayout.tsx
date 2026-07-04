@@ -6,6 +6,8 @@ import { Footer } from '../components/layout/Footer';
 import { FloatingAssistant } from '../components/layout/FloatingAssistant';
 import { BackgroundShader } from '../components/layout/BackgroundShader';
 
+import { EmergencyAlertsBanner } from '../components/ui/EmergencyAlertsBanner';
+
 export const DashboardLayout: React.FC = () => {
   return (
     <div className="flex flex-col min-h-screen relative antialiased">
@@ -23,6 +25,7 @@ export const DashboardLayout: React.FC = () => {
         {/* Dynamic Content Panel */}
         <main className="flex-1 w-full md:pl-64 h-full overflow-y-auto overflow-x-hidden relative scroll-smooth flex flex-col">
           <div className="p-4 sm:p-margin-mobile md:p-gutter lg:p-margin-desktop flex-grow flex flex-col gap-gutter max-w-7xl mx-auto mt-2 md:mt-4 w-full pb-24 md:pb-6">
+            <EmergencyAlertsBanner />
             <Outlet />
           </div>
           {/* Shared Footer inside main viewport */}
