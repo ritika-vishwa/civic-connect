@@ -71,6 +71,9 @@ export const ReportIssue: React.FC = () => {
   // AI Assist (Step 1)
   const [isAiAssisting, setIsAiAssisting] = useState(false);
   const [isAnalyzingImage, setIsAnalyzingImage] = useState(false);
+  const [isVerifyingImage, setIsVerifyingImage] = useState(false);
+  const [verificationResult, setVerificationResult] = useState<{ isValid: boolean; reason: string } | null>(null);
+  const [showRejectModal, setShowRejectModal] = useState(false);
   const [duplicateIssueId, setDuplicateIssueId] = useState<string | null>(null);
 
   // AI Suggestions (Step 2)
@@ -155,11 +158,101 @@ export const ReportIssue: React.FC = () => {
     }
   };
 
+  const verifyImage = async (base64Image: string): Promise<{ isValid: boolean; reason: string }> => {
+    setIsVerifyingImage(true);
+    showToast('AI verifying image validity...', 'info');
+
+    try {
+      // 1. Attempt backend verification
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/ai/verify-image`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ image: base64Image })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        return {
+          isValid: data.isValid !== false,
+          reason: data.reason || 'Verification completed'
+        };
+      }
+      throw new Error('Backend verification status not OK');
+    } catch (e) {
+      console.warn("Backend AI verification failed, falling back to client-side Gemini:", e);
+      // 2. Client-side Gemini fallback
+      const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+      if (apiKey) {
+        try {
+          const genAI = new GoogleGenerativeAI(apiKey);
+          const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+          
+          const mimeType = base64Image.match(/data:(.*?);base64/)?.[1] || 'image/jpeg';
+          const base64Data = base64Image.split(',')[1];
+          
+          const prompt = `Analyze this image to verify if it represents a valid real-world municipal or civic issue (such as potholes, road damage, garbage piles, broken lights, leaks, graffiti, vandalism, public safety hazards).
+          
+          Determine if the image is fake, irrelevant, a selfie, indoor room clean, drawing, meme, food, text document, or clip art.
+          
+          Return a JSON object exactly matching this format:
+          {
+            "isValid": true | false,
+            "reason": "Clear explanation of why it is approved or rejected."
+          }
+          Return raw JSON only, no markdown styling.`;
+
+          const result = await model.generateContent([
+            prompt,
+            {
+              inlineData: {
+                data: base64Data,
+                mimeType
+              }
+            }
+          ]);
+          
+          const responseText = result.response.text();
+          const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+          if (jsonMatch) {
+            const data = JSON.parse(jsonMatch[0]);
+            return {
+              isValid: data.isValid !== false,
+              reason: data.reason || 'Client-side verification completed'
+            };
+          }
+        } catch (clientError) {
+          console.error("Direct Gemini client verification failed:", clientError);
+        }
+      }
+      
+      // If all AI fails, default to true so we don't block the user (safety requirement: "It should not fail")
+      return { isValid: true, reason: 'AI systems bypassed. Defaulting to valid.' };
+    } finally {
+      setIsVerifyingImage(false);
+    }
+  };
+
   const simulateAiImageAnalysis = async (base64Image: string) => {
     setIsAnalyzingImage(true);
     setTitle('');
     setDescription('');
     setCategory('Other');
+    setVerificationResult(null);
+
+    // Run verification first
+    const verifyResult = await verifyImage(base64Image);
+    setVerificationResult(verifyResult);
+
+    if (!verifyResult.isValid) {
+      setIsAnalyzingImage(false);
+      setShowRejectModal(true);
+      setImage(''); // Clear rejected image
+      showToast('Image rejected: Not a valid civic issue', 'error');
+      return;
+    }
+
     showToast('AI analyzing image signature...', 'info');
 
     try {
@@ -926,6 +1019,40 @@ export const ReportIssue: React.FC = () => {
             <p className="text-xs text-primary-container font-mono uppercase tracking-wider animate-pulse h-10 flex items-center justify-center">
               {submissionProgress}
             </p>
+          </div>
+        </div>
+      )}
+
+      {/* Rejection Modal */}
+      {showRejectModal && verificationResult && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-[#00060d]/80 backdrop-blur-sm" onClick={() => setShowRejectModal(false)} />
+          <div className="relative w-full max-w-sm bg-[#031427]/95 border border-error/30 rounded-2xl p-6 shadow-[0_0_50px_rgba(255,180,171,0.15)] flex flex-col gap-5 animate-scale-in">
+            <div className="flex justify-between items-center border-b border-white/10 pb-2">
+              <h3 className="font-display-lg text-sm font-black text-error uppercase tracking-wider flex items-center gap-1.5">
+                <span className="material-symbols-outlined">report_gmailerrorred</span>
+                Image Verification Failed
+              </h3>
+              <button onClick={() => setShowRejectModal(false)} className="text-white/60 hover:text-white transition-colors">
+                <span className="material-symbols-outlined text-sm">close</span>
+              </button>
+            </div>
+            
+            <p className="text-xs text-white/80 font-light leading-relaxed">
+              Our AI verification engine scanned the image and determined it does not represent a valid civic issue.
+            </p>
+            
+            <div className="p-3 bg-error/10 border border-error/20 rounded-xl">
+              <span className="font-mono text-[9px] text-error uppercase font-bold tracking-widest">Reason for Rejection:</span>
+              <p className="text-xs font-mono text-white/95 mt-1 leading-normal font-medium">{verificationResult.reason}</p>
+            </div>
+
+            <button
+              onClick={() => setShowRejectModal(false)}
+              className="w-full text-center py-2.5 rounded-lg bg-error text-black text-xs font-bold uppercase tracking-widest hover:bg-white hover:text-black transition-all cursor-pointer animate-pulse"
+            >
+              Upload Another Image
+            </button>
           </div>
         </div>
       )}
