@@ -25,6 +25,7 @@ interface EventItem {
   isRegistered: boolean;
   registeredBy: string[];
   image: string;
+  createdBy?: string;
 }
 
 export const Events: React.FC = () => {
@@ -76,7 +77,7 @@ export const Events: React.FC = () => {
   }, [rawEvents, user]);
 
   const handleRegister = async (id: string) => {
-    if (!canRegister) {
+    if (!user || !canRegister) {
       showToast('Please log in as a citizen to register for events.', 'warning');
       return;
     }
@@ -319,7 +320,7 @@ END:VCALENDAR`;
                   </label>
                   <CustomSelect
                     value={newCategory}
-                    onChange={(val) => setNewCategory(val)}
+                    onChange={(val) => setNewCategory(val as any)}
                     options={['Town Hall', 'Volunteering', 'Environment', 'Policy']}
                     placeholder="Select Category"
                   />

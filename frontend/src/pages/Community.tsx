@@ -106,7 +106,7 @@ export const Community: React.FC = () => {
   };
 
   const handleUpvote = async (postId: string) => {
-    if (!canUpvote) {
+    if (!user || !canUpvote) {
       showToast('Please log in to upvote posts', 'warning');
       return;
     }

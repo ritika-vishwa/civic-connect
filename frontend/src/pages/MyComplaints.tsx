@@ -159,7 +159,7 @@ export const MyComplaints: React.FC = () => {
             <label className="text-[9px] font-mono text-white/40 uppercase tracking-wider">Sort Telemetry</label>
             <CustomSelect
               value={sortBy}
-              onChange={(val) => setSortBy(val)}
+              onChange={(val) => setSortBy(val as 'newest' | 'oldest' | 'endorsed')}
               options={[
                 { label: 'Newest First', value: 'newest' },
                 { label: 'Oldest First', value: 'oldest' },

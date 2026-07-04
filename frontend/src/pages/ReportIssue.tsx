@@ -11,6 +11,14 @@ import { AIResultCard } from '../components/ui/AIResultCard';
 import confetti from 'canvas-confetti';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { canReportIssue } from '../context/permissions';
+import { motion, AnimatePresence } from 'framer-motion';
+
+const stepVariants = {
+  initial: { opacity: 0, scale: 0.98, y: 8 },
+  animate: { opacity: 1, scale: 1, y: 0, transition: { duration: 0.35, ease: [0.16, 1, 0.3, 1] } },
+  exit: { opacity: 0, scale: 0.98, y: -8, transition: { duration: 0.2, ease: [0.16, 1, 0.3, 1] } }
+} as const;
+
 
 // Map marker pinner helper
 const MapEventsHelper = ({ onPin }: { onPin: (latlng: L.LatLng) => void }) => {
@@ -93,7 +101,7 @@ export const ReportIssue: React.FC = () => {
       if (!apiKey) throw new Error("Missing Gemini API Key");
       const genAI = new GoogleGenerativeAI(apiKey);
       const model = genAI.getGenerativeModel({ 
-        model: 'gemini-1.5-flash',
+        model: 'gemini-2.5-flash',
         generationConfig: { responseMimeType: "application/json" }
       });
 
@@ -131,7 +139,7 @@ export const ReportIssue: React.FC = () => {
 
       const genAI = new GoogleGenerativeAI(apiKey);
       const model = genAI.getGenerativeModel({ 
-        model: 'gemini-1.5-flash',
+        model: 'gemini-2.5-flash',
         generationConfig: { responseMimeType: "application/json" }
       });
 
@@ -307,7 +315,12 @@ export const ReportIssue: React.FC = () => {
   };
 
   return (
-    <div className="w-full flex flex-col items-center">
+    <motion.div 
+      initial={{ opacity: 0, y: 15 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+      className="w-full flex flex-col items-center"
+    >
       {/* Header */}
       <header className="mb-10 text-center md:text-left pt-6 w-full">
         <h1 className="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary neon-glow-text mb-3">
@@ -368,9 +381,17 @@ export const ReportIssue: React.FC = () => {
       </div>
 
       {/* Main Form Box */}
-      <GlassCard noHover className="w-full border border-white/10 bg-[#031427]/40 shadow-xl mb-12">
-        {step === 1 && (
-          <div className="flex flex-col gap-6">
+      <GlassCard noHover className="w-full border border-white/10 bg-[#031427]/40 shadow-xl mb-12 overflow-hidden">
+        <AnimatePresence mode="wait" initial={false}>
+          {step === 1 && (
+            <motion.div
+              key="step1"
+              variants={stepVariants}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+              className="flex flex-col gap-6"
+            >
 
             {/* Title & AI Assist */}
             <div className="flex flex-col gap-2">
@@ -577,11 +598,18 @@ export const ReportIssue: React.FC = () => {
               <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
             </button>
 
-          </div>
-        )}
+            </motion.div>
+          )}
 
-        {step === 2 && (
-          <div className="flex flex-col gap-6">
+          {step === 2 && (
+            <motion.div
+              key="step2"
+              variants={stepVariants}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+              className="flex flex-col gap-6"
+            >
             {duplicateIssueId && (
               <GlassCard noHover className="p-5 border border-error/30 bg-error/5 relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-error/10 rounded-full blur-[40px] -mr-10 -mt-10"></div>
@@ -651,11 +679,18 @@ export const ReportIssue: React.FC = () => {
               </button>
             </div>
 
-          </div>
-        )}
+            </motion.div>
+          )}
 
-        {step === 3 && (
-          <div className="flex flex-col gap-6">
+          {step === 3 && (
+            <motion.div
+              key="step3"
+              variants={stepVariants}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+              className="flex flex-col gap-6"
+            >
             <h3 className="font-display-lg text-lg font-bold text-white uppercase tracking-tight flex items-center gap-2">
               <span className="material-symbols-outlined text-primary-container">fact_check</span>
               Review & Submit Complaint
@@ -722,8 +757,9 @@ export const ReportIssue: React.FC = () => {
               </button>
             </div>
 
-          </div>
-        )}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </GlassCard>
 
       {/* Full-screen Loading Overlay for submit animation */}
@@ -744,7 +780,7 @@ export const ReportIssue: React.FC = () => {
           </div>
         </div>
       )}
-    </div>
+    </motion.div>
   );
 };
 export default ReportIssue;

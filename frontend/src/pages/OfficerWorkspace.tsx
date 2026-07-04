@@ -202,7 +202,7 @@ export const OfficerWorkspace: React.FC = () => {
                       <label className="text-[9px] font-mono text-white/40 uppercase">Target Status</label>
                       <CustomSelect
                         value={statusVal}
-                        onChange={(val) => setStatusVal(val)}
+                        onChange={(val) => setStatusVal(val as any)}
                         options={['Reported', 'Under Review', 'Assigned', 'In Progress', 'Resolved', 'Closed']}
                       />
                     </div>

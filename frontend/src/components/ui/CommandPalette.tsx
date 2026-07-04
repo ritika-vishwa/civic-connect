@@ -60,7 +60,7 @@ export const CommandPalette: React.FC = () => {
 
   const roles: { name: string; value: UserRole; desc: string }[] = [
     { name: 'Citizen Interface', value: 'citizen', desc: 'Default view for residents' },
-    { name: 'Officer Interface', value: 'officer', desc: 'View for field technicians & officers' },
+    { name: 'Officer Interface', value: 'official', desc: 'View for field technicians & officers' },
     { name: 'Admin Control Room', value: 'admin', desc: 'Full administration matrix' }
   ];
 
