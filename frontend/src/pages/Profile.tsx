@@ -15,6 +15,22 @@ import { OfficialProfileStats } from '../components/profile/OfficialProfileStats
 import { AdminProfileStats } from '../components/profile/AdminProfileStats';
 import { ModeratorProfileStats } from '../components/profile/ModeratorProfileStats';
 
+const fetchWithTimeout = async (url: string, options: RequestInit, timeoutMs = 2000) => {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const response = await fetch(url, {
+      ...options,
+      signal: controller.signal
+    });
+    clearTimeout(id);
+    return response;
+  } catch (error) {
+    clearTimeout(id);
+    throw error;
+  }
+};
+
 export const Profile: React.FC = () => {
   const { user, logout, deleteAccount, updateUserAvatar } = useAuth();
   const { issues } = useIssues();
@@ -87,10 +103,10 @@ export const Profile: React.FC = () => {
         const formData = new FormData();
         formData.append('image', croppedFile);
         
-        const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/upload`, {
+        const response = await fetchWithTimeout(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/upload`, {
           method: 'POST',
           body: formData,
-        });
+        }, 1800);
 
         if (!response.ok) {
           throw new Error('Upload failed');
@@ -105,6 +121,21 @@ export const Profile: React.FC = () => {
     } catch (error) {
       console.error("Avatar upload failed:", error);
       showToast('Failed to upload avatar. Please try again.', 'error');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const deleteProfileImage = async () => {
+    if (!user) return;
+    setIsUploading(true);
+    try {
+      const defaultAvatar = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(user.name)}`;
+      await updateUserAvatar(defaultAvatar);
+      showToast('Profile image deleted successfully!', 'success');
+    } catch (error) {
+      console.error("Failed to delete profile image:", error);
+      showToast('Failed to delete profile image. Please try again.', 'error');
     } finally {
       setIsUploading(false);
     }
@@ -175,21 +206,38 @@ export const Profile: React.FC = () => {
                 {isUploading ? (
                   <span className="material-symbols-outlined text-primary-container text-2xl animate-spin">progress_activity</span>
                 ) : (
-                  <>
+                  <div className="flex w-full h-full">
+                    {/* View Button */}
                     <button 
                       onClick={() => setLightboxOpen(true)}
-                      className="flex-1 flex flex-col items-center justify-center w-full hover:bg-white/10 transition-colors"
+                      className="flex-1 flex flex-col items-center justify-center hover:bg-white/10 transition-colors"
+                      title="View Avatar"
                     >
-                      <span className="material-symbols-outlined text-primary-container text-xl">visibility</span>
-                      <span className="text-[8px] font-bold uppercase tracking-widest text-primary-container mt-1">View</span>
+                      <span className="material-symbols-outlined text-primary-container text-lg">visibility</span>
+                      <span className="text-[7px] font-mono font-bold uppercase tracking-wider text-primary-container mt-0.5">View</span>
                     </button>
-                    <div className="w-full h-[1px] bg-white/20"></div>
-                    <label className="flex-1 flex flex-col items-center justify-center w-full hover:bg-white/10 transition-colors cursor-pointer">
-                      <span className="material-symbols-outlined text-primary-container text-xl">add_a_photo</span>
-                      <span className="text-[8px] font-bold uppercase tracking-widest text-primary-container mt-1">Upload</span>
+                    <div className="w-[1px] bg-white/20 h-full"></div>
+                    {/* Upload Button */}
+                    <label className="flex-1 flex flex-col items-center justify-center hover:bg-white/10 transition-colors cursor-pointer" title="Upload Avatar">
+                      <span className="material-symbols-outlined text-primary-container text-lg">add_a_photo</span>
+                      <span className="text-[7px] font-mono font-bold uppercase tracking-wider text-primary-container mt-0.5">Upload</span>
                       <input type="file" accept="image/*" className="hidden" onChange={handleAvatarSelect} disabled={isUploading} />
                     </label>
-                  </>
+                    {/* Only show delete if current avatar is not a default Dicebear initials one */}
+                    {!user.avatar.includes('dicebear.com') && (
+                      <>
+                        <div className="w-[1px] bg-white/20 h-full"></div>
+                        <button 
+                          onClick={deleteProfileImage}
+                          className="flex-1 flex flex-col items-center justify-center hover:bg-red-500/20 text-red-400 transition-colors"
+                          title="Delete Avatar"
+                        >
+                          <span className="material-symbols-outlined text-lg">delete</span>
+                          <span className="text-[7px] font-mono font-bold uppercase tracking-wider mt-0.5">Delete</span>
+                        </button>
+                      </>
+                    )}
+                  </div>
                 )}
               </div>
             </div>
