@@ -9,7 +9,7 @@ import { useAuth } from '../context/AuthContext';
 import { GlassCard } from '../components/ui/GlassCard';
 import { AIResultCard } from '../components/ui/AIResultCard';
 import confetti from 'canvas-confetti';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from '@google/generative-ai';
 import { canReportIssue } from '../context/permissions';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -18,6 +18,22 @@ const stepVariants = {
   animate: { opacity: 1, x: 0, transition: { duration: 0.4, ease: [0.16, 1, 0.3, 1] } },
   exit: { opacity: 0, x: -20, transition: { duration: 0.2, ease: [0.16, 1, 0.3, 1] } }
 } as const;
+
+const fetchWithTimeout = async (url: string, options: RequestInit, timeoutMs = 2000) => {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const response = await fetch(url, {
+      ...options,
+      signal: controller.signal
+    });
+    clearTimeout(id);
+    return response;
+  } catch (error) {
+    clearTimeout(id);
+    throw error;
+  }
+};
 
 
 // Map marker pinner helper
@@ -163,14 +179,14 @@ export const ReportIssue: React.FC = () => {
     showToast('AI verifying image validity...', 'info');
 
     try {
-      // 1. Attempt backend verification
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/ai/verify-image`, {
+      // 1. Attempt backend verification with timeout
+      const response = await fetchWithTimeout(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/ai/verify-image`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ image: base64Image })
-      });
+      }, 1800);
 
       if (response.ok) {
         const data = await response.json();
@@ -187,7 +203,27 @@ export const ReportIssue: React.FC = () => {
       if (apiKey) {
         try {
           const genAI = new GoogleGenerativeAI(apiKey);
-          const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+          const model = genAI.getGenerativeModel({ 
+            model: 'gemini-2.5-flash',
+            safetySettings: [
+              {
+                category: HarmCategory.HARM_CATEGORY_HARASSMENT,
+                threshold: HarmBlockThreshold.BLOCK_NONE,
+              },
+              {
+                category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+                threshold: HarmBlockThreshold.BLOCK_NONE,
+              },
+              {
+                category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+                threshold: HarmBlockThreshold.BLOCK_NONE,
+              },
+              {
+                category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+                threshold: HarmBlockThreshold.BLOCK_NONE,
+              },
+            ]
+          });
           
           const mimeType = base64Image.match(/data:(.*?);base64/)?.[1] || 'image/jpeg';
           const base64Data = base64Image.split(',')[1];
@@ -256,13 +292,14 @@ export const ReportIssue: React.FC = () => {
     showToast('AI analyzing image signature...', 'info');
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/ai/analyze-image`, {
+      // Attempt backend with timeout
+      const response = await fetchWithTimeout(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/ai/analyze-image`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ image: base64Image })
-      });
+      }, 1800);
 
       if (!response.ok) {
         throw new Error('Failed to analyze image');
@@ -292,7 +329,27 @@ export const ReportIssue: React.FC = () => {
       if (apiKey) {
         try {
           const genAI = new GoogleGenerativeAI(apiKey);
-          const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+          const model = genAI.getGenerativeModel({ 
+            model: 'gemini-2.5-flash',
+            safetySettings: [
+              {
+                category: HarmCategory.HARM_CATEGORY_HARASSMENT,
+                threshold: HarmBlockThreshold.BLOCK_NONE,
+              },
+              {
+                category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+                threshold: HarmBlockThreshold.BLOCK_NONE,
+              },
+              {
+                category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+                threshold: HarmBlockThreshold.BLOCK_NONE,
+              },
+              {
+                category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+                threshold: HarmBlockThreshold.BLOCK_NONE,
+              },
+            ]
+          });
           
           const mimeType = base64Image.match(/data:(.*?);base64/)?.[1] || 'image/jpeg';
           const base64Data = base64Image.split(',')[1];

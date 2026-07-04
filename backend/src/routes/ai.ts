@@ -135,4 +135,55 @@ router.post('/assist', async (req, res) => {
   }
 });
 
+router.post('/verify-image', async (req, res) => {
+  try {
+    const { image } = req.body;
+    if (!image) {
+      return res.status(400).json({ error: 'Image data is required.' });
+    }
+
+    const apiKey = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY;
+    if (!apiKey) {
+      return res.status(500).json({ error: 'Gemini API key is not configured.' });
+    }
+
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({ 
+      model: 'gemini-2.5-flash',
+      generationConfig: { responseMimeType: "application/json" }
+    });
+
+    const base64Data = image.split(',')[1];
+    const mimeType = image.split(';')[0].split(':')[1] || 'image/jpeg';
+
+    const prompt = `Analyze this image to verify if it represents a valid real-world municipal or civic issue (such as potholes, road damage, garbage piles, broken lights, leaks, graffiti, vandalism, public safety hazards).
+    
+    Determine if the image is fake, irrelevant, a selfie, indoor room clean, drawing, meme, food, text document, or clip art.
+    
+    Return a JSON object exactly matching this format:
+    {
+      "isValid": true | false,
+      "reason": "Clear explanation of why it is approved or rejected."
+    }
+    Return raw JSON only, no markdown styling.`;
+
+    const result = await model.generateContent([
+      prompt,
+      { inlineData: { data: base64Data, mimeType } }
+    ]);
+
+    let jsonStr = result.response.text().trim();
+    const match = jsonStr.match(/\{[\s\S]*\}/);
+    if (match) {
+      jsonStr = match[0];
+    }
+    const aiData = JSON.parse(jsonStr);
+
+    res.json(aiData);
+  } catch (error: any) {
+    console.error('Error verifying image:', error);
+    res.status(500).json({ error: 'Failed to verify image.', details: error.message });
+  }
+});
+
 export default router;

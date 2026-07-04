@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { collection, query, where, onSnapshot, orderBy } from 'firebase/firestore';
 import { db } from '../../firebase';
+import { useAuth } from '../../context/AuthContext';
 
 export interface EmergencyAlert {
   id: string;
@@ -16,6 +17,7 @@ export interface EmergencyAlert {
 }
 
 export const EmergencyAlertsBanner: React.FC = () => {
+  const { user } = useAuth();
   const [alerts, setAlerts] = useState<EmergencyAlert[]>([]);
   const [dismissedIds, setDismissedIds] = useState<string[]>(() => {
     try {
@@ -53,6 +55,9 @@ export const EmergencyAlertsBanner: React.FC = () => {
   };
 
   const activeAlerts = alerts.filter(alert => !dismissedIds.includes(alert.id));
+
+  // Hide the global banner at the top for officials and admins
+  if (user && (user.role === 'official' || user.role === 'admin')) return null;
 
   if (activeAlerts.length === 0) return null;
 
