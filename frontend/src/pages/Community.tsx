@@ -326,7 +326,6 @@ export const Community: React.FC = () => {
                     src={post.image} 
                     alt={post.title} 
                     className="w-full h-full object-cover object-center" 
-                    referrerPolicy="no-referrer"
                     onError={(e) => {
                       (e.target as HTMLImageElement).style.display = 'none';
                     }}
