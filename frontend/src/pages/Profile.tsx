@@ -7,7 +7,9 @@ import { IssueCard } from '../components/ui/IssueCard';
 import { ImageCropModal } from '../components/ui/ImageCropModal';
 import { ImageLightbox } from '../components/ui/ImageLightbox';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
-import { db } from '../firebase';
+import { db, storage } from '../firebase';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { useNotification } from '../context/NotificationContext';
 import { CitizenProfileStats } from '../components/profile/CitizenProfileStats';
 import { OfficialProfileStats } from '../components/profile/OfficialProfileStats';
 import { AdminProfileStats } from '../components/profile/AdminProfileStats';
@@ -16,6 +18,7 @@ import { ModeratorProfileStats } from '../components/profile/ModeratorProfileSta
 export const Profile: React.FC = () => {
   const { user, logout, deleteAccount, updateUserAvatar } = useAuth();
   const { issues } = useIssues();
+  const { showToast } = useNotification();
   const navigate = useNavigate();
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [myEvents, setMyEvents] = useState<any[]>([]);
@@ -46,7 +49,7 @@ export const Profile: React.FC = () => {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (error) {
       setShowDeleteModal(false);
-      alert("Failed to delete account. Please try again.");
+      showToast("Failed to delete account. Please try again.", "error");
     }
   };
 
@@ -54,7 +57,7 @@ export const Profile: React.FC = () => {
     const file = e.target.files?.[0];
     if (file) {
       if (file.size > 5 * 1024 * 1024) {
-        alert('Image must be less than 5MB');
+        showToast('Image must be less than 5MB', 'error');
         return;
       }
       const reader = new FileReader();
@@ -62,33 +65,46 @@ export const Profile: React.FC = () => {
         setCropImageSrc(reader.result as string);
       };
       reader.onerror = () => {
-        alert('Failed to read file.');
+        showToast('Failed to read file.', 'error');
       };
       reader.readAsDataURL(file);
     }
   };
 
   const handleCropComplete = async (croppedFile: File) => {
+    if (!user) return;
     setCropImageSrc(null);
     setIsUploading(true);
-    const formData = new FormData();
-    formData.append('image', croppedFile);
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/upload`, {
-        method: 'POST',
-        body: formData,
-      });
+      let avatarUrl = '';
+      try {
+        const avatarRef = ref(storage, `avatars/${user.uid}-${Date.now()}`);
+        await uploadBytes(avatarRef, croppedFile);
+        avatarUrl = await getDownloadURL(avatarRef);
+      } catch (storageErr) {
+        console.warn("Firebase Storage avatar upload failed, falling back to backend upload:", storageErr);
+        const formData = new FormData();
+        formData.append('image', croppedFile);
+        
+        const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/upload`, {
+          method: 'POST',
+          body: formData,
+        });
 
-      if (!response.ok) {
-        throw new Error('Upload failed');
+        if (!response.ok) {
+          throw new Error('Upload failed');
+        }
+
+        const data = await response.json();
+        avatarUrl = data.url;
       }
 
-      const data = await response.json();
-      await updateUserAvatar(data.url);
+      await updateUserAvatar(avatarUrl);
+      showToast('Avatar updated successfully!', 'success');
     } catch (error) {
       console.error("Avatar upload failed:", error);
-      alert('Failed to upload avatar. Please try again.');
+      showToast('Failed to upload avatar. Please try again.', 'error');
     } finally {
       setIsUploading(false);
     }

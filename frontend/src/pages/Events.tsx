@@ -5,7 +5,8 @@ import { CustomDatePicker, CustomTimePicker } from '../components/ui/DateTimePic
 import { CustomSelect } from '../components/ui/CustomSelect';
 import { useNotification } from '../context/NotificationContext';
 import { collection, onSnapshot, query, doc, updateDoc, arrayUnion, arrayRemove, addDoc, orderBy, deleteDoc } from 'firebase/firestore';
-import { db } from '../firebase';
+import { db, storage } from '../firebase';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { useAuth } from '../context/AuthContext';
 import {
   canRegisterForEvents,
@@ -58,6 +59,7 @@ export const Events: React.FC = () => {
       setRawEvents(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
     }, (error) => {
       console.error("Error fetching events:", error);
+      showToast('Failed to load events. Please check your connection.', 'error');
     });
     return () => unsubscribe();
   }, []);
@@ -174,22 +176,30 @@ export const Events: React.FC = () => {
     try {
       let finalImageUrl = 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&q=80&w=800'; // Default event image
       if (selectedImageFile) {
-        const formData = new FormData();
-        formData.append('image', selectedImageFile);
-        
         try {
-          const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/upload`, {
-            method: 'POST',
-            body: formData
-          });
-          if (response.ok) {
-            const data = await response.json();
-            finalImageUrl = data.url;
-          } else {
-            console.warn("Backend upload failed, falling back to dummy image.");
+          // 1. Attempt uploading directly to Firebase Storage first
+          const eventImageRef = ref(storage, `events/${Date.now()}-${selectedImageFile.name}`);
+          await uploadBytes(eventImageRef, selectedImageFile);
+          finalImageUrl = await getDownloadURL(eventImageRef);
+        } catch (storageErr) {
+          console.warn("Firebase Storage event upload failed, falling back to backend upload:", storageErr);
+          // 2. Fallback to backend upload
+          const formData = new FormData();
+          formData.append('image', selectedImageFile);
+          try {
+            const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/upload`, {
+              method: 'POST',
+              body: formData
+            });
+            if (response.ok) {
+              const data = await response.json();
+              finalImageUrl = data.url;
+            } else {
+              console.warn("Backend upload failed, falling back to dummy image.");
+            }
+          } catch (uploadErr) {
+            console.warn("Backend upload failed, falling back to dummy image.", uploadErr);
           }
-        } catch (uploadErr) {
-          console.warn("Backend upload failed, falling back to dummy image.", uploadErr);
         }
       }
 

@@ -27,6 +27,7 @@ export const Notifications: React.FC = () => {
       setLogs(fetched);
     }, (error) => {
       console.error("Error fetching notifications:", error);
+      showToast('Failed to load notifications. Please check your connection.', 'error');
     });
 
     return () => unsubscribe();
@@ -52,6 +53,7 @@ export const Notifications: React.FC = () => {
       await updateDoc(ref, { isRead: true });
     } catch (error) {
       console.error("Failed to mark read:", error);
+      showToast('Failed to update notification status.', 'error');
     }
   };
 
