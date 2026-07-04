@@ -70,7 +70,7 @@ export const AdminDashboard: React.FC = () => {
       {/* Page Header */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-white/10 pb-6 animate-fade-in-up">
         <div>
-          <h1 className="font-display-lg text-4xl md:text-5xl font-black text-white uppercase tracking-tight drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]">
+          <h1 className="font-display-lg text-3xl md:text-4xl lg:text-5xl font-black text-white uppercase tracking-tight drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]">
             Platform Command
           </h1>
           <p className="text-primary-container/80 font-mono text-sm mt-2 uppercase tracking-widest">
@@ -141,7 +141,7 @@ export const AdminDashboard: React.FC = () => {
 
       {/* Analytics Chart */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-gutter">
-        <div className="col-span-1 lg:col-span-7 glass-card rounded-2xl p-6 md:p-8 flex flex-col min-h-[450px] animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
+        <div className="col-span-1 lg:col-span-7 glass-card rounded-2xl p-6 md:p-8 flex flex-col min-h-[300px] md:min-h-[450px] animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
           <div className="flex justify-between items-center mb-6">
             <h3 className="font-display-lg text-xl font-black text-white uppercase tracking-tight">Issue Breakdown</h3>
             <button

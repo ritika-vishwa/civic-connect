@@ -26,7 +26,7 @@ export const Map: React.FC = () => {
   });
 
   return (
-    <div className="relative w-full h-[calc(100vh-140px)] rounded-2xl overflow-hidden border border-white/10 animate-fade-in-up">
+    <div className="relative w-full rounded-2xl overflow-hidden border border-white/10 animate-fade-in-up" style={{ height: 'calc(100dvh - 160px)', minHeight: '400px' }}>
       {/* Interactive Map */}
       <MapContainer
         center={[40.7580, -73.9855]}
@@ -66,7 +66,7 @@ export const Map: React.FC = () => {
       </MapContainer>
 
       {/* Floating Filter Overlay */}
-      <div className="absolute top-4 left-4 z-[999] w-80 max-w-[90vw] pointer-events-none">
+      <div className="absolute top-4 left-4 z-[999] w-72 max-w-[calc(100vw-2rem)] pointer-events-none">
         <GlassCard noHover overflowVisible className="p-5 border border-primary-container/30 bg-[#031427]/85 backdrop-blur-xl pointer-events-auto shadow-[0_0_30px_rgba(0,240,255,0.15)] flex flex-col gap-4">
           <div className="flex items-center gap-2 border-b border-primary-container/20 pb-3">
             <span className="material-symbols-outlined text-primary-container text-xl drop-shadow-[0_0_5px_#00f0ff]">filter_alt</span>

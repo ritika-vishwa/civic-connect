@@ -16,13 +16,13 @@ export const DashboardLayout: React.FC = () => {
       <TopNav />
 
       {/* Main Layout Wrap */}
-      <div className="flex-grow flex pt-20 h-screen overflow-hidden max-w-container-max mx-auto w-full relative">
+      <div className="flex-grow flex pt-16 md:pt-20 h-screen overflow-hidden max-w-container-max mx-auto w-full relative">
         {/* Shared Left Sidebar Navigation */}
         <Sidebar />
 
         {/* Dynamic Content Panel */}
         <main className="flex-1 w-full md:pl-64 h-full overflow-y-auto overflow-x-hidden relative scroll-smooth flex flex-col">
-          <div className="p-margin-mobile md:p-gutter lg:p-margin-desktop flex-grow flex flex-col gap-gutter max-w-7xl mx-auto mt-4 w-full">
+          <div className="p-4 sm:p-margin-mobile md:p-gutter lg:p-margin-desktop flex-grow flex flex-col gap-gutter max-w-7xl mx-auto mt-2 md:mt-4 w-full pb-24 md:pb-6">
             <Outlet />
           </div>
           {/* Shared Footer inside main viewport */}

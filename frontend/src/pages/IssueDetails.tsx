@@ -172,7 +172,7 @@ export const IssueDetails: React.FC = () => {
           </div>
 
           {/* Action Buttons */}
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             {canEdit && (
               <button
                 onClick={() => setShowEditModal(true)}

@@ -228,26 +228,26 @@ export const Landing: React.FC = () => {
             <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-full h-1/2 bg-gradient-to-t from-[#00f0ff]/10 to-transparent blur-3xl z-0"></div>
           </div>
 
-          <motion.div variants={containerVariants} initial="hidden" animate="visible" className="relative z-10 p-8 md:p-16 max-w-5xl text-center flex flex-col items-center mt-6">
+          <motion.div variants={containerVariants} initial="hidden" animate="visible" className="relative z-10 px-4 py-8 md:p-16 max-w-5xl text-center flex flex-col items-center mt-6 w-full">
             <motion.div variants={itemVariants} className="inline-flex items-center gap-3 bg-[#000f21]/80 border border-primary-container/50 rounded-full px-6 py-2 backdrop-blur-md mb-8 shadow-[0_0_20px_rgba(0,240,255,0.2)]">
               <span className="w-2 h-2 rounded-full bg-primary-container animate-pulse shadow-[0_0_10px_#00f0ff]"></span>
               <span className="font-label-caps text-label-caps text-primary-container uppercase tracking-widest font-bold">A New Era of Civic Engagement</span>
             </motion.div>
 
-            <motion.h1 variants={itemVariants} className="font-display-lg text-5xl md:text-8xl leading-[1.1] mb-8 font-black text-white uppercase tracking-tighter drop-shadow-[0_0_25px_rgba(255,255,255,0.3)]">
+            <motion.h1 variants={itemVariants} className="font-display-lg text-4xl sm:text-5xl md:text-8xl leading-[1.1] mb-6 md:mb-8 font-black text-white uppercase tracking-tighter drop-shadow-[0_0_25px_rgba(255,255,255,0.3)]">
               Empowering <br/>
               <span className="text-primary-container drop-shadow-[0_0_30px_rgba(0,240,255,0.6)]">Communities</span> <br/>
               Through Clarity.
             </motion.h1>
 
-            <motion.p variants={itemVariants} className="font-body-lg text-xl md:text-2xl max-w-3xl mx-auto mb-6 text-on-surface-variant font-light leading-relaxed">
+            <motion.p variants={itemVariants} className="font-body-lg text-base sm:text-xl md:text-2xl max-w-3xl mx-auto mb-6 text-on-surface-variant font-light leading-relaxed px-2">
               Report civic issues instantly. Track resolutions, participate in local discussions, and build a stronger community together.
             </motion.p>
 
             {/* Issue Type Ticker */}
-            <motion.div variants={itemVariants} className="flex items-center gap-3 mb-12 h-10">
+            <motion.div variants={itemVariants} className="flex items-center gap-3 mb-8 md:mb-12 h-10">
               <span className="text-on-surface-variant text-sm font-mono uppercase tracking-widest hidden sm:block">Now reporting:</span>
-              <div className="relative overflow-hidden h-10 flex items-center min-w-[280px]">
+              <div className="relative overflow-hidden h-10 flex items-center min-w-0 max-w-[280px]">
                 <AnimatePresence mode="wait">
                   <motion.div
                     key={activeIssueType}
@@ -264,12 +264,12 @@ export const Landing: React.FC = () => {
               </div>
             </motion.div>
 
-            <motion.div variants={itemVariants} className="flex flex-wrap gap-6 justify-center">
-              <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={handleHeroCTA} className="group relative flex items-center justify-center gap-3 bg-gradient-to-r from-primary-container to-[#0088ff] text-[#00060d] font-label-caps text-sm tracking-widest uppercase px-12 py-5 rounded-full font-bold shadow-[0_0_30px_rgba(0,240,255,0.4)] hover:shadow-[0_0_50px_rgba(0,240,255,0.8)] transition-shadow duration-300 cursor-pointer overflow-hidden">
+            <motion.div variants={itemVariants} className="flex flex-col sm:flex-row gap-4 justify-center w-full max-w-md sm:max-w-none">
+              <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={handleHeroCTA} className="group relative flex items-center justify-center gap-3 bg-gradient-to-r from-primary-container to-[#0088ff] text-[#00060d] font-label-caps text-sm tracking-widest uppercase px-8 sm:px-12 py-4 sm:py-5 rounded-full font-bold shadow-[0_0_30px_rgba(0,240,255,0.4)] hover:shadow-[0_0_50px_rgba(0,240,255,0.8)] transition-shadow duration-300 cursor-pointer overflow-hidden min-h-[52px]">
                 <div className="absolute inset-0 bg-white/30 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out"></div>
                 <span className="relative z-10 flex items-center gap-2">Get Started <span className="material-symbols-outlined text-[18px] group-hover:translate-x-1 transition-transform">rocket_launch</span></span>
               </motion.button>
-              <motion.button whileHover={{ scale: 1.05, backgroundColor: 'rgba(0,240,255,0.1)', borderColor: '#00f0ff', boxShadow: '0 0 30px rgba(0,240,255,0.3)' }} whileTap={{ scale: 0.95 }} onClick={() => navigate('/about')} className="group flex items-center justify-center gap-3 bg-transparent backdrop-blur-md text-white font-label-caps text-sm tracking-widest uppercase px-12 py-5 rounded-full border-2 border-primary-container/40 transition-all duration-300 cursor-pointer">
+              <motion.button whileHover={{ scale: 1.05, backgroundColor: 'rgba(0,240,255,0.1)', borderColor: '#00f0ff', boxShadow: '0 0 30px rgba(0,240,255,0.3)' }} whileTap={{ scale: 0.95 }} onClick={() => navigate('/about')} className="group flex items-center justify-center gap-3 bg-transparent backdrop-blur-md text-white font-label-caps text-sm tracking-widest uppercase px-8 sm:px-12 py-4 sm:py-5 rounded-full border-2 border-primary-container/40 transition-all duration-300 cursor-pointer min-h-[52px]">
                 <span className="material-symbols-outlined text-[18px] group-hover:rotate-45 transition-transform duration-500">explore</span>
                 Learn More
               </motion.button>

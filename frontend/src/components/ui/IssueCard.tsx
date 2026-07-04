@@ -101,11 +101,11 @@ export const IssueCard: React.FC<IssueCardProps> = ({ issue, className = '', lay
           </div>
 
           {/* Badges & Date */}
-          <div className="flex justify-between items-center mt-2">
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-1 bg-[#00060d] px-2 py-1 rounded border border-primary-container/20 text-primary-container text-[10px] uppercase font-mono font-bold">
-                <span className="material-symbols-outlined text-xs">{getCategoryIcon(issue.category)}</span>
-                {issue.category}
+          <div className="flex flex-wrap justify-between items-center mt-2 gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
+              <div className="flex items-center gap-1 bg-[#00060d] px-2 py-1 rounded border border-primary-container/20 text-primary-container text-[10px] uppercase font-mono font-bold max-w-[130px] overflow-hidden">
+                <span className="material-symbols-outlined text-xs shrink-0">{getCategoryIcon(issue.category)}</span>
+                <span className="truncate">{issue.category}</span>
               </div>
               <StatusBadge value={issue.status} type="status" />
             </div>

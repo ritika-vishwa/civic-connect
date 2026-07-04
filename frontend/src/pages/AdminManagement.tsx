@@ -83,39 +83,41 @@ export const AdminManagement: React.FC = () => {
       </div>
 
       {/* Tabs list */}
-      <div className="flex items-center gap-2 bg-[#00060d]/80 backdrop-blur-md rounded-xl p-1.5 border border-primary-container/20 self-start animate-fade-in-up shadow-md">
-        <button
-          onClick={() => setActiveTab('matrix')}
-          className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-all ${
-            activeTab === 'matrix' ? 'bg-primary-container/20 text-primary-container border border-primary-container/30' : 'text-white/60 hover:text-white'
-          }`}
-        >
-          Permission Matrix
-        </button>
-        <button
-          onClick={() => setActiveTab('users')}
-          className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-all ${
-            activeTab === 'users' ? 'bg-primary-container/20 text-primary-container border border-primary-container/30' : 'text-white/60 hover:text-white'
-          }`}
-        >
-          Users & Security
-        </button>
-        <button
-          onClick={() => setActiveTab('depts')}
-          className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-all ${
-            activeTab === 'depts' ? 'bg-primary-container/20 text-primary-container border border-primary-container/30' : 'text-white/60 hover:text-white'
-          }`}
-        >
-          Municipal Sectors
-        </button>
-        <button
-          onClick={() => setActiveTab('moderation')}
-          className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-all ${
-            activeTab === 'moderation' ? 'bg-primary-container/20 text-primary-container border border-primary-container/30' : 'text-white/60 hover:text-white'
-          }`}
-        >
-          Flagged Notices
-        </button>
+      <div className="overflow-x-auto -mx-1 pb-1 animate-fade-in-up">
+        <div className="flex items-center gap-2 bg-[#00060d]/80 backdrop-blur-md rounded-xl p-1.5 border border-primary-container/20 shadow-md min-w-max">
+          <button
+            onClick={() => setActiveTab('matrix')}
+            className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-all whitespace-nowrap ${
+              activeTab === 'matrix' ? 'bg-primary-container/20 text-primary-container border border-primary-container/30' : 'text-white/60 hover:text-white'
+            }`}
+          >
+            Permission Matrix
+          </button>
+          <button
+            onClick={() => setActiveTab('users')}
+            className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-all whitespace-nowrap ${
+              activeTab === 'users' ? 'bg-primary-container/20 text-primary-container border border-primary-container/30' : 'text-white/60 hover:text-white'
+            }`}
+          >
+            Users & Security
+          </button>
+          <button
+            onClick={() => setActiveTab('depts')}
+            className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-all whitespace-nowrap ${
+              activeTab === 'depts' ? 'bg-primary-container/20 text-primary-container border border-primary-container/30' : 'text-white/60 hover:text-white'
+            }`}
+          >
+            Municipal Sectors
+          </button>
+          <button
+            onClick={() => setActiveTab('moderation')}
+            className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-all whitespace-nowrap ${
+              activeTab === 'moderation' ? 'bg-primary-container/20 text-primary-container border border-primary-container/30' : 'text-white/60 hover:text-white'
+            }`}
+          >
+            Flagged Notices
+          </button>
+        </div>
       </div>
 
       {/* Tab Panels */}

@@ -77,7 +77,7 @@ export const OfficerWorkspace: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col gap-6 w-full h-[calc(100vh-140px)] animate-fade-in-up">
+    <div className="flex flex-col gap-6 w-full animate-fade-in-up">
       
       {/* Filters header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/10 pb-4 shrink-0">
@@ -102,10 +102,10 @@ export const OfficerWorkspace: React.FC = () => {
       </div>
 
       {/* Main Workspace split */}
-      <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-12 gap-gutter h-full">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-gutter">
         
         {/* Left Column: List of assigned issues (4 cols) */}
-        <div className="col-span-1 lg:col-span-4 flex flex-col gap-4 overflow-y-auto pr-1">
+        <div className="col-span-1 lg:col-span-4 flex flex-col gap-4 max-h-[400px] lg:max-h-[calc(100vh-300px)] overflow-y-auto pr-1">
           {filtered.map(issue => {
             const isActive = issue.id === selectedIssueId;
             return (
