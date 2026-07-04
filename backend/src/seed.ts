@@ -38,7 +38,7 @@ const samplePosts = [
     isOfficial: true,
     title: 'Suggestion: Adding more recycling bins at the park',
     description: 'I noticed the park gets very littered over the weekend. What does everyone think about petitioning the city for more recycling bins? I have attached a photo of the current state of the main picnic area.',
-    image: 'https://images.unsplash.com/photo-1595278069441-2f29f803e599?auto=format&fit=crop&w=800',
+    image: '/mock-park-litter.jpg',
     upvotes: 0,
     upvotedBy: ['user1', 'user3', 'user4', 'user5', 'user6', 'user7'],
     createdAt: new Date(Date.now() - 3600000 * 5).toISOString()
