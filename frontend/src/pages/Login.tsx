@@ -157,6 +157,16 @@ export const Login: React.FC = () => {
 
         {/* Social / Demo Logins */}
         <motion.div variants={itemVariants} className="w-full flex flex-col gap-3 mb-6">
+          
+          {/* Informational Banner */}
+          <div className="bg-primary-container/5 border border-primary-container/20 rounded-xl p-3 flex gap-3 items-start mb-1 text-left shadow-[0_0_10px_rgba(0,240,255,0.05)]">
+            <span className="material-symbols-outlined text-primary-container text-[16px] mt-0.5">info</span>
+            <p className="text-[10px] text-white/70 font-mono leading-relaxed">
+              <strong className="text-primary-container">Note:</strong> Google Sign-In always enters <strong className="text-white">Citizen Mode</strong>. 
+              To register or sign in as a specific role (Official, Admin, etc.), please use Email & Password authentication below.
+            </p>
+          </div>
+
           <motion.button 
             whileHover={{ scale: 1.02, backgroundColor: "rgba(3,20,39,1)" }}
             whileTap={{ scale: 0.98 }}
