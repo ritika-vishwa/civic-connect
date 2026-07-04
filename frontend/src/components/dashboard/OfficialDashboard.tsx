@@ -1,15 +1,45 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useIssues } from '../../context/IssueContext';
 import { useAuth } from '../../context/AuthContext';
 import { StatusBadge } from '../ui/StatusBadge';
 import { BroadcastAlertModal } from '../ui/BroadcastAlertModal';
+import { collection, query, where, onSnapshot, orderBy, doc, updateDoc } from 'firebase/firestore';
+import { db } from '../../firebase';
+import { useNotification } from '../../context/NotificationContext';
 
 export const OfficialDashboard: React.FC = () => {
   const navigate = useNavigate();
   const { issues, loading } = useIssues();
   const { user } = useAuth();
   const [isAlertModalOpen, setIsAlertModalOpen] = useState(false);
+  const [activeAlerts, setActiveAlerts] = useState<any[]>([]);
+  const { showToast } = useNotification();
+
+  useEffect(() => {
+    const q = query(
+      collection(db, 'emergency_alerts'),
+      where('active', '==', true),
+      orderBy('createdAt', 'desc')
+    );
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      setActiveAlerts(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    }, (err) => {
+      console.error("Failed to fetch active alerts:", err);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const handleDeactivateAlert = async (id: string) => {
+    try {
+      const alertRef = doc(db, 'emergency_alerts', id);
+      await updateDoc(alertRef, { active: false });
+      showToast('Emergency alert deactivated for everyone.', 'success');
+    } catch (err) {
+      console.error("Failed to deactivate alert:", err);
+      showToast('Failed to deactivate alert. Please try again.', 'error');
+    }
+  };
 
 
   // Since officials should only see their department's issues (or all if not specified)
@@ -202,6 +232,37 @@ export const OfficialDashboard: React.FC = () => {
                     </div>
                   );
                 })}
+              </div>
+            </div>
+
+            {/* Active Broadcasts Panel */}
+            <div className="mt-4 p-4 border border-error/20 rounded-xl bg-error/5">
+              <h4 className="font-bold text-white uppercase tracking-widest text-xs mb-3 flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-error text-sm">campaign</span>
+                Active Broadcasts
+              </h4>
+              <div className="flex flex-col gap-3">
+                {activeAlerts.length === 0 ? (
+                  <div className="text-center py-4 text-white/40 font-mono text-[9px] border border-white/5 border-dashed rounded-lg">
+                    No active emergency alerts.
+                  </div>
+                ) : (
+                  activeAlerts.map(alert => (
+                    <div key={alert.id} className="p-3 rounded-lg bg-black/30 border border-white/5 flex flex-col gap-1.5">
+                      <div className="flex justify-between items-start gap-1">
+                        <span className="font-bold text-white text-[11px] uppercase tracking-wide line-clamp-1">{alert.title}</span>
+                        <span className="text-[8px] font-mono uppercase text-error px-1 bg-error/10 border border-error/20 rounded shrink-0">{alert.severity}</span>
+                      </div>
+                      <p className="text-[10px] text-white/60 leading-normal line-clamp-2">{alert.description}</p>
+                      <button
+                        onClick={() => handleDeactivateAlert(alert.id)}
+                        className="mt-1 w-full text-center py-1 rounded bg-error/20 hover:bg-error/30 border border-error/40 text-error text-[9px] font-bold uppercase tracking-widest cursor-pointer transition-colors"
+                      >
+                        Deactivate Alert
+                      </button>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
           </div>
