@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { GlassCard } from '../components/ui/GlassCard';
+import { CustomSelect } from '../components/ui/CustomSelect';
 import { useNotification } from '../context/NotificationContext';
 
 type AdminTab = 'matrix' | 'users' | 'depts' | 'moderation';
@@ -188,7 +189,7 @@ export const AdminManagement: React.FC = () => {
         )}
 
         {activeTab === 'users' && (
-          <GlassCard noHover className="p-6 md:p-8">
+          <GlassCard noHover overflowVisible className="relative z-50 p-6 md:p-8">
             <h3 className="font-display-lg text-lg font-bold text-white uppercase tracking-tight mb-6">Security Node Accounts</h3>
             <div className="flex flex-col gap-4">
               {users.map(u => (
@@ -199,15 +200,15 @@ export const AdminManagement: React.FC = () => {
                   </div>
                   
                   <div className="flex items-center gap-4">
-                    <select
+                    <CustomSelect
                       value={u.role}
-                      onChange={(e) => handleRoleChange(u.id, e.target.value as any)}
-                      className="input-glass rounded-lg px-2.5 py-1.5 text-[10px] font-mono uppercase"
-                    >
-                      <option value="citizen">Citizen</option>
-                      <option value="officer">Officer</option>
-                      <option value="admin">Admin</option>
-                    </select>
+                      onChange={(val) => handleRoleChange(u.id, val as any)}
+                      options={[
+                        { label: 'Citizen', value: 'citizen' },
+                        { label: 'Officer', value: 'officer' },
+                        { label: 'Admin', value: 'admin' }
+                      ]}
+                    />
 
                     <button
                       onClick={() => handleUserStatusToggle(u.id)}

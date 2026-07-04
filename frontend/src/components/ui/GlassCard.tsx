@@ -5,6 +5,7 @@ interface GlassCardProps {
   children: React.ReactNode;
   className?: string;
   noHover?: boolean;
+  overflowVisible?: boolean;
   onClick?: () => void;
   style?: React.CSSProperties;
 }
@@ -12,13 +13,14 @@ interface GlassCardProps {
 export const GlassCard: React.FC<GlassCardProps> = ({ 
   children, 
   className = '', 
-  noHover = false, 
+  noHover = false,
+  overflowVisible = false,
   onClick,
   style
 }) => {
   const cardClasses = `${
     noHover ? 'glass-card-no-hover' : 'glass-card'
-  } rounded-2xl p-6 relative overflow-hidden group ${onClick ? 'cursor-pointer' : ''} ${className}`;
+  } rounded-2xl p-6 relative ${overflowVisible ? '' : 'overflow-hidden'} group ${onClick ? 'cursor-pointer' : ''} ${className}`;
 
   if (noHover) {
     return (

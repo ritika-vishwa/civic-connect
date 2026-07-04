@@ -43,6 +43,20 @@ export const Sidebar: React.FC = () => {
         </NavLink>
 
         <NavLink 
+          to="/map" 
+          className={({ isActive }) => 
+            `px-4 py-3 flex items-center gap-3 font-label-caps text-label-caps uppercase tracking-widest rounded-xl border transition-all ${
+              isActive 
+                ? "bg-primary-container/10 text-primary-container border-primary-container/30 shadow-[0_0_15px_rgba(0,240,255,0.1)] font-bold" 
+                : "text-white/70 hover:text-white hover:bg-white/5 border-transparent"
+            }`
+          }
+        >
+          <span className="material-symbols-outlined">map</span>
+          Live Map
+        </NavLink>
+
+        <NavLink 
           to="/analytics" 
           className={({ isActive }) => 
             `px-4 py-3 flex items-center gap-3 font-label-caps text-label-caps uppercase tracking-widest rounded-xl border transition-all ${

@@ -5,6 +5,7 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { useIssues } from '../context/IssueContext';
 import { StatusBadge } from '../components/ui/StatusBadge';
+import { CustomSelect } from '../components/ui/CustomSelect';
 import { GlassCard } from '../components/ui/GlassCard';
 
 export const Map: React.FC = () => {
@@ -65,8 +66,8 @@ export const Map: React.FC = () => {
       </MapContainer>
 
       {/* Floating Filter Overlay */}
-      <div className="absolute top-4 left-4 z-20 w-80 max-w-[90vw] pointer-events-none">
-        <GlassCard noHover className="p-5 border border-primary-container/30 bg-[#031427]/85 backdrop-blur-xl pointer-events-auto shadow-[0_0_30px_rgba(0,240,255,0.15)] flex flex-col gap-4">
+      <div className="absolute top-4 left-4 z-[999] w-80 max-w-[90vw] pointer-events-none">
+        <GlassCard noHover overflowVisible className="p-5 border border-primary-container/30 bg-[#031427]/85 backdrop-blur-xl pointer-events-auto shadow-[0_0_30px_rgba(0,240,255,0.15)] flex flex-col gap-4">
           <div className="flex items-center gap-2 border-b border-primary-container/20 pb-3">
             <span className="material-symbols-outlined text-primary-container text-xl drop-shadow-[0_0_5px_#00f0ff]">filter_alt</span>
             <h4 className="text-sm font-bold text-white uppercase tracking-wider">Geospatial Filters</h4>
@@ -75,52 +76,31 @@ export const Map: React.FC = () => {
           {/* Category Filter */}
           <div className="flex flex-col gap-1.5">
             <label className="text-[10px] font-mono uppercase tracking-widest text-white/40">Category</label>
-            <select
+            <CustomSelect
               value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
-              className="input-glass w-full rounded-lg px-3 py-2 text-xs font-mono"
-            >
-              <option value="All">All Categories</option>
-              <option value="Infrastructure">Infrastructure</option>
-              <option value="Waste">Waste</option>
-              <option value="Traffic">Traffic</option>
-              <option value="Safety">Safety</option>
-              <option value="Noise">Noise</option>
-            </select>
+              onChange={(val) => setSelectedCategory(val)}
+              options={['All', 'Infrastructure', 'Waste', 'Traffic', 'Safety', 'Noise']}
+            />
           </div>
 
           {/* Severity Filter */}
           <div className="flex flex-col gap-1.5">
             <label className="text-[10px] font-mono uppercase tracking-widest text-white/40">Severity</label>
-            <select
+            <CustomSelect
               value={selectedSeverity}
-              onChange={(e) => setSelectedSeverity(e.target.value)}
-              className="input-glass w-full rounded-lg px-3 py-2 text-xs font-mono"
-            >
-              <option value="All">All Severities</option>
-              <option value="Low">Low</option>
-              <option value="Medium">Medium</option>
-              <option value="High">High</option>
-              <option value="Critical">Critical</option>
-            </select>
+              onChange={(val) => setSelectedSeverity(val)}
+              options={['All', 'Low', 'Medium', 'High', 'Critical']}
+            />
           </div>
 
           {/* Status Filter */}
           <div className="flex flex-col gap-1.5">
             <label className="text-[10px] font-mono uppercase tracking-widest text-white/40">Status</label>
-            <select
+            <CustomSelect
               value={selectedStatus}
-              onChange={(e) => setSelectedStatus(e.target.value)}
-              className="input-glass w-full rounded-lg px-3 py-2 text-xs font-mono"
-            >
-              <option value="All">All Statuses</option>
-              <option value="Reported">Reported</option>
-              <option value="Under Review">Under Review</option>
-              <option value="Assigned">Assigned</option>
-              <option value="In Progress">In Progress</option>
-              <option value="Resolved">Resolved</option>
-              <option value="Closed">Closed</option>
-            </select>
+              onChange={(val) => setSelectedStatus(val)}
+              options={['All', 'Reported', 'Under Review', 'Assigned', 'In Progress', 'Resolved', 'Closed']}
+            />
           </div>
 
           {/* Result Count Indicator */}

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNotification } from '../context/NotificationContext';
 import { GlassCard } from '../components/ui/GlassCard';
+import { ConfirmModal } from '../components/ui/ConfirmModal';
 
 export const Settings: React.FC = () => {
   const { user } = useAuth();
@@ -14,6 +15,7 @@ export const Settings: React.FC = () => {
   const [emailAlerts, setEmailAlerts] = useState(true);
   const [smsAlerts, setSmsAlerts] = useState(false);
   const [shareGPS, setShareGPS] = useState(true);
+  const [showWipeConfirm, setShowWipeConfirm] = useState(false);
 
   const handleProfileSave = (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,18 +39,29 @@ export const Settings: React.FC = () => {
   };
 
   const handleWipeCache = () => {
-    const consent = window.confirm('Are you sure you want to wipe all local issues, logins, and settings? This resets the platform.');
-    if (consent) {
-      localStorage.clear();
-      showToast('Cache purged. Reloading network...', 'warning');
-      setTimeout(() => {
-        window.location.href = '/';
-      }, 1000);
-    }
+    setShowWipeConfirm(true);
+  };
+
+  const confirmWipeCache = () => {
+    localStorage.clear();
+    showToast('Cache purged. Reloading network...', 'warning');
+    setTimeout(() => {
+      window.location.href = '/';
+    }, 1000);
   };
 
   return (
     <div className="flex flex-col gap-8 w-full">
+      <ConfirmModal
+        isOpen={showWipeConfirm}
+        title="Wipe Local Cache"
+        message="Are you sure you want to wipe all local issues, logins, and settings? This resets the platform."
+        confirmText="Wipe Data"
+        onConfirm={confirmWipeCache}
+        onCancel={() => setShowWipeConfirm(false)}
+        isDestructive={true}
+      />
+      
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-white/10 pb-6 animate-fade-in-up">
         <div>

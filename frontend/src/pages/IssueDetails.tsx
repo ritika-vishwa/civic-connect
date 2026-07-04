@@ -9,15 +9,19 @@ import { useNotification } from '../context/NotificationContext';
 import { GlassCard } from '../components/ui/GlassCard';
 import { StatusBadge } from '../components/ui/StatusBadge';
 import { Timeline } from '../components/ui/Timeline';
+import { ConfirmModal } from '../components/ui/ConfirmModal';
+import { EditIssueModal } from '../components/ui/EditIssueModal';
 
 export const IssueDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { issues, supportIssue, addComment } = useIssues();
+  const { issues, supportIssue, addComment, deleteIssue, updateIssue } = useIssues();
   const { user } = useAuth();
   const { showToast } = useNotification();
 
   const [commentText, setCommentText] = useState('');
+  const [showConfirmDelete, setShowConfirmDelete] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
 
   const issue = issues.find((i) => i.id === id);
 
@@ -63,6 +67,29 @@ export const IssueDetails: React.FC = () => {
     showToast('Official comment posted!', 'success');
   };
 
+  const canEdit = (issue.authorId && issue.authorId === user?.uid) || (!issue.authorId && issue.citizenName === user?.name);
+  const canDelete = user?.role === 'admin' || canEdit;
+
+  const handleDeleteConfirm = async () => {
+    try {
+      await deleteIssue(issue.id);
+      showToast("Report deleted successfully", "success");
+      navigate('/');
+    } catch (e) {
+      showToast("Failed to delete report", "error");
+    }
+  };
+
+  const handleEditSave = async (updates: Partial<Issue>) => {
+    try {
+      await updateIssue(issue.id, updates);
+      showToast("Report updated successfully", "success");
+      setShowEditModal(false);
+    } catch (e) {
+      showToast("Failed to update report", "error");
+    }
+  };
+
   // Nearby issues mock (excluding current issue)
   const nearbyIssues = issues
     .filter((i) => i.id !== issue.id && i.category === issue.category)
@@ -70,6 +97,23 @@ export const IssueDetails: React.FC = () => {
 
   return (
     <div className="flex flex-col gap-8 w-full animate-fade-in-up">
+      <ConfirmModal
+        isOpen={showConfirmDelete}
+        title="Delete Report"
+        message="Are you sure you want to delete this report? This action cannot be undone."
+        confirmText="Delete"
+        onConfirm={handleDeleteConfirm}
+        onCancel={() => setShowConfirmDelete(false)}
+        isDestructive={true}
+      />
+      
+      <EditIssueModal
+        isOpen={showEditModal}
+        issue={issue}
+        onSave={handleEditSave}
+        onCancel={() => setShowEditModal(false)}
+      />
+
       {/* Hero Image Section */}
       <div className="relative w-full h-80 rounded-2xl overflow-hidden border border-white/10 shadow-xl bg-surface-container-lowest">
         <img 
@@ -98,18 +142,38 @@ export const IssueDetails: React.FC = () => {
             </p>
           </div>
 
-          {/* Endorsement CTA */}
-          <button
-            onClick={handleSupport}
-            className={`px-5 py-3 rounded-xl text-xs font-bold uppercase tracking-widest border transition-all flex items-center gap-2 cursor-pointer shrink-0 ${
-              issue.isSupportedByCurrentUser
-                ? 'bg-primary-container text-black border-primary-container shadow-[0_0_20px_rgba(0,240,255,0.4)]'
-                : 'btn-glass text-white'
-            }`}
-          >
-            <span className="material-symbols-outlined text-[18px]">thumb_up</span>
-            <span>{issue.supportCount} Endorsements</span>
-          </button>
+          {/* Action Buttons */}
+          <div className="flex items-center gap-3">
+            {canEdit && (
+              <button
+                onClick={() => setShowEditModal(true)}
+                className="px-5 py-3 rounded-xl text-xs font-bold uppercase tracking-widest border border-white/20 bg-white/5 text-white hover:bg-white/10 transition-all flex items-center gap-2 cursor-pointer shrink-0"
+              >
+                <span className="material-symbols-outlined text-[18px]">edit</span>
+                <span className="hidden sm:inline">Edit</span>
+              </button>
+            )}
+            {canDelete && (
+              <button
+                onClick={() => setShowConfirmDelete(true)}
+                className="px-5 py-3 rounded-xl text-xs font-bold uppercase tracking-widest border border-error/50 bg-error/10 text-error hover:bg-error hover:text-white transition-all flex items-center gap-2 cursor-pointer shrink-0"
+              >
+                <span className="material-symbols-outlined text-[18px]">delete</span>
+                <span className="hidden sm:inline">Delete</span>
+              </button>
+            )}
+            <button
+              onClick={handleSupport}
+              className={`px-5 py-3 rounded-xl text-xs font-bold uppercase tracking-widest border transition-all flex items-center gap-2 cursor-pointer shrink-0 ${
+                issue.isSupportedByCurrentUser
+                  ? 'bg-primary-container text-black border-primary-container shadow-[0_0_20px_rgba(0,240,255,0.4)]'
+                  : 'btn-glass text-white'
+              }`}
+            >
+              <span className="material-symbols-outlined text-[18px]">thumb_up</span>
+              <span>{issue.supportCount} Endorsements</span>
+            </button>
+          </div>
         </div>
       </div>
 

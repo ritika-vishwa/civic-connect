@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useIssues } from '../context/IssueContext';
 import { useAuth } from '../context/AuthContext';
 import { IssueCard } from '../components/ui/IssueCard';
+import { CustomSelect } from '../components/ui/CustomSelect';
 import { GlassCard } from '../components/ui/GlassCard';
 
 export const MyComplaints: React.FC = () => {
@@ -19,7 +20,7 @@ export const MyComplaints: React.FC = () => {
 
   // Filter issues filed by this user (Jane Doe is our citizen, others can see all or their own)
   const myIssues = issues.filter(
-    (issue) => issue.citizenName.toLowerCase() === user.name.toLowerCase() || user.role !== 'citizen'
+    (issue) => issue.authorId === user.uid || (issue.citizenName && issue.citizenName.toLowerCase() === user.name.toLowerCase()) || user.role !== 'citizen'
   );
 
   // Search & Filter Heuristics
@@ -45,9 +46,9 @@ export const MyComplaints: React.FC = () => {
   });
 
   // Metrics
-  const openCount = myIssues.filter(i => i.status !== 'Resolved').length;
-  const resolvedCount = myIssues.filter(i => i.status === 'Resolved').length;
-  const criticalCount = myIssues.filter(i => i.severity === 'Critical' && i.status !== 'Resolved').length;
+  const openCount = myIssues.filter(i => i.status !== 'Resolved' && i.status !== 'Closed').length;
+  const resolvedCount = myIssues.filter(i => i.status === 'Resolved' || i.status === 'Closed').length;
+  const criticalCount = myIssues.filter(i => i.severity === 'Critical' && i.status !== 'Resolved' && i.status !== 'Closed').length;
 
   return (
     <div className="flex flex-col gap-8 w-full">
@@ -89,7 +90,7 @@ export const MyComplaints: React.FC = () => {
       </div>
 
       {/* Filter and Control Bar */}
-      <GlassCard noHover className="p-5 flex flex-col gap-4 border-white/10 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+      <GlassCard noHover overflowVisible className="relative z-50 p-5 flex flex-col gap-4 border-white/10 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
         {/* Search */}
         <div className="relative">
           <input
@@ -106,63 +107,42 @@ export const MyComplaints: React.FC = () => {
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 items-center">
           <div className="flex flex-col gap-1">
             <label className="text-[9px] font-mono text-white/40 uppercase tracking-wider">Category</label>
-            <select
+            <CustomSelect
               value={filterCategory}
-              onChange={(e) => setFilterCategory(e.target.value)}
-              className="input-glass w-full rounded-lg px-3 py-2.5 text-xs font-mono"
-            >
-              <option value="All">All Categories</option>
-              <option value="Infrastructure">Infrastructure</option>
-              <option value="Waste">Waste</option>
-              <option value="Traffic">Traffic</option>
-              <option value="Safety">Safety</option>
-              <option value="Noise">Noise</option>
-            </select>
+              onChange={(val) => setFilterCategory(val)}
+              options={['All', 'Infrastructure', 'Waste', 'Traffic', 'Safety', 'Noise']}
+            />
           </div>
 
           <div className="flex flex-col gap-1">
             <label className="text-[9px] font-mono text-white/40 uppercase tracking-wider">Severity</label>
-            <select
+            <CustomSelect
               value={filterSeverity}
-              onChange={(e) => setFilterSeverity(e.target.value)}
-              className="input-glass w-full rounded-lg px-3 py-2.5 text-xs font-mono"
-            >
-              <option value="All">All Severities</option>
-              <option value="Low">Low</option>
-              <option value="Medium">Medium</option>
-              <option value="High">High</option>
-              <option value="Critical">Critical</option>
-            </select>
+              onChange={(val) => setFilterSeverity(val)}
+              options={['All', 'Low', 'Medium', 'High', 'Critical']}
+            />
           </div>
 
           <div className="flex flex-col gap-1">
             <label className="text-[9px] font-mono text-white/40 uppercase tracking-wider">Status</label>
-            <select
+            <CustomSelect
               value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
-              className="input-glass w-full rounded-lg px-3 py-2.5 text-xs font-mono"
-            >
-              <option value="All">All Statuses</option>
-              <option value="Reported">Reported</option>
-              <option value="Under Review">Under Review</option>
-              <option value="Assigned">Assigned</option>
-              <option value="In Progress">In Progress</option>
-              <option value="Resolved">Resolved</option>
-              <option value="Closed">Closed</option>
-            </select>
+              onChange={(val) => setFilterStatus(val)}
+              options={['All', 'Reported', 'Under Review', 'Assigned', 'In Progress', 'Resolved', 'Closed']}
+            />
           </div>
 
           <div className="flex flex-col gap-1">
             <label className="text-[9px] font-mono text-white/40 uppercase tracking-wider">Sort Telemetry</label>
-            <select
+            <CustomSelect
               value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as any)}
-              className="input-glass w-full rounded-lg px-3 py-2.5 text-xs font-mono"
-            >
-              <option value="newest">Newest First</option>
-              <option value="oldest">Oldest First</option>
-              <option value="endorsed">Most Endorsed</option>
-            </select>
+              onChange={(val) => setSortBy(val)}
+              options={[
+                { label: 'Newest First', value: 'newest' },
+                { label: 'Oldest First', value: 'oldest' },
+                { label: 'Most Endorsed', value: 'endorsed' }
+              ]}
+            />
           </div>
         </div>
 
@@ -197,7 +177,7 @@ export const MyComplaints: React.FC = () => {
       {sorted.length > 0 ? (
         <div className={isListView ? 'flex flex-col gap-4' : 'grid grid-cols-1 md:grid-cols-2 gap-6'}>
           {sorted.map((issue) => (
-            <IssueCard key={issue.id} issue={issue} />
+            <IssueCard key={issue.id} issue={issue} layout={isListView ? 'row' : 'col'} />
           ))}
         </div>
       ) : (

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { GlassCard } from '../components/ui/GlassCard';
+import { ConfirmModal } from '../components/ui/ConfirmModal';
 import { CustomDatePicker, CustomTimePicker } from '../components/ui/DateTimePicker';
 import { CustomSelect } from '../components/ui/CustomSelect';
 import { useNotification } from '../context/NotificationContext';
@@ -36,6 +37,7 @@ export const Events: React.FC = () => {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
   const [isGeneratingDesc, setIsGeneratingDesc] = useState(false);
+  const [eventToDelete, setEventToDelete] = useState<{id: string, title: string} | null>(null);
 
   const { showToast } = useNotification();
   const { user } = useAuth();
@@ -90,15 +92,19 @@ export const Events: React.FC = () => {
   };
 
   const handleDeleteEvent = async (id: string, title: string) => {
-    if (!window.confirm(`Are you sure you want to delete "${title}"? This cannot be undone.`)) {
-      return;
-    }
+    setEventToDelete({ id, title });
+  };
+
+  const confirmDeleteEvent = async () => {
+    if (!eventToDelete) return;
     try {
-      await deleteDoc(doc(db, 'events', id));
+      await deleteDoc(doc(db, 'events', eventToDelete.id));
       showToast(`Event deleted successfully`, 'success');
     } catch (error) {
       console.error("Failed to delete event:", error);
       showToast('Failed to delete event', 'error');
+    } finally {
+      setEventToDelete(null);
     }
   };
 
@@ -243,6 +249,15 @@ END:VCALENDAR`;
 
   return (
     <div className="flex flex-col gap-8 w-full">
+      <ConfirmModal
+        isOpen={!!eventToDelete}
+        title="Delete Event"
+        message={`Are you sure you want to delete "${eventToDelete?.title}"? This cannot be undone.`}
+        confirmText="Delete"
+        onConfirm={confirmDeleteEvent}
+        onCancel={() => setEventToDelete(null)}
+        isDestructive={true}
+      />
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-white/10 pb-6 animate-fade-in-up">
         <div>
@@ -268,7 +283,7 @@ END:VCALENDAR`;
       {/* Create Event Form */}
       {showForm && (
         <div className="animate-fade-in-up">
-          <GlassCard noHover className="p-6 border border-primary-container/40">
+          <GlassCard noHover overflowVisible className="relative z-50 p-6 border border-primary-container/40">
             <form onSubmit={handleCreateEvent} className="flex flex-col gap-4">
               <h3 className="font-display-lg text-lg font-bold text-white uppercase tracking-tight">Schedule New Event</h3>
               

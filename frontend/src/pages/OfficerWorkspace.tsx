@@ -7,6 +7,7 @@ import { useAuth } from '../context/AuthContext';
 import { useNotification } from '../context/NotificationContext';
 import { GlassCard } from '../components/ui/GlassCard';
 import { StatusBadge } from '../components/ui/StatusBadge';
+import { CustomSelect } from '../components/ui/CustomSelect';
 
 export const OfficerWorkspace: React.FC = () => {
   const { issues, updateStatus, assignWorker } = useIssues();
@@ -84,15 +85,11 @@ export const OfficerWorkspace: React.FC = () => {
 
         <div className="flex items-center gap-2">
           <span className="text-[9px] font-mono text-white/40 uppercase">Department Queue:</span>
-          <select
+          <CustomSelect
             value={filterDepartment}
-            onChange={(e) => setFilterDepartment(e.target.value)}
-            className="input-glass rounded-lg px-3 py-1.5 text-xs font-mono"
-          >
-            {departments.map(d => (
-              <option key={d} value={d}>{d}</option>
-            ))}
-          </select>
+            onChange={(val) => setFilterDepartment(val)}
+            options={departments}
+          />
         </div>
       </div>
 
@@ -166,24 +163,19 @@ export const OfficerWorkspace: React.FC = () => {
                 </GlassCard>
 
                 {/* Worker Assignment panel */}
-                <GlassCard noHover className="p-5">
+                <GlassCard noHover overflowVisible className="relative z-50 p-5">
                   <h4 className="font-mono text-[10px] uppercase text-primary-container font-bold border-b border-white/5 pb-2 mb-3">
                     Assign Field Technician
                   </h4>
                   <form onSubmit={handleAssignWorkerSubmit} className="flex flex-col gap-3">
                     <div className="flex flex-col gap-1">
                       <label className="text-[9px] font-mono text-white/40 uppercase">Select Worker</label>
-                      <select
+                      <CustomSelect
                         value={workerName}
-                        onChange={(e) => setWorkerName(e.target.value)}
-                        className="input-glass w-full rounded-lg px-3 py-2 text-xs font-mono"
-                        required
-                      >
-                        <option value="">Choose Worker...</option>
-                        {workers.map(w => (
-                          <option key={w} value={w}>{w}</option>
-                        ))}
-                      </select>
+                        onChange={(val) => setWorkerName(val)}
+                        options={workers}
+                        placeholder="Choose Worker..."
+                      />
                     </div>
                     <button
                       type="submit"
@@ -199,24 +191,18 @@ export const OfficerWorkspace: React.FC = () => {
               <div className="flex flex-col gap-4">
                 
                 {/* Status Update Form */}
-                <GlassCard noHover className="p-5">
+                <GlassCard noHover overflowVisible className="relative z-40 p-5">
                   <h4 className="font-mono text-[10px] uppercase text-primary-container font-bold border-b border-white/5 pb-2 mb-3">
                     Update Ticket Dispatch Logs
                   </h4>
                   <form onSubmit={handleUpdateStatusSubmit} className="flex flex-col gap-4">
                     <div className="flex flex-col gap-1">
                       <label className="text-[9px] font-mono text-white/40 uppercase">Target Status</label>
-                      <select
+                      <CustomSelect
                         value={statusVal}
-                        onChange={(e) => setStatusVal(e.target.value as any)}
-                        className="input-glass w-full rounded-lg px-3 py-2 text-xs font-mono"
-                      >
-                        <option value="Reported">Reported</option>
-                        <option value="Under Review">Under Review</option>
-                        <option value="Assigned">Assigned</option>
-                        <option value="In Progress">In Progress</option>
-                        <option value="Resolved">Resolved</option>
-                      </select>
+                        onChange={(val) => setStatusVal(val)}
+                        options={['Reported', 'Under Review', 'Assigned', 'In Progress', 'Resolved', 'Closed']}
+                      />
                     </div>
 
                     <div className="flex flex-col gap-1">

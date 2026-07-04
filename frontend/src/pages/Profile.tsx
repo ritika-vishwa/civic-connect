@@ -92,9 +92,9 @@ export const Profile: React.FC = () => {
 
   if (!user) return null;
 
-  // Filter issues filed by this user (Jane Doe is our citizen, others can be listed)
+  // Filter to just the user's issues
   const myIssues = issues.filter(
-    (issue) => issue.citizenName.toLowerCase() === user.name.toLowerCase() || user.role !== 'citizen'
+    (issue) => issue.authorId === user.uid || (issue.citizenName && issue.citizenName.toLowerCase() === user.name.toLowerCase())
   );
 
   // Statistics
@@ -245,20 +245,48 @@ export const Profile: React.FC = () => {
               Network Node Badges
             </h4>
             <div className="flex flex-wrap gap-4 mt-2">
-              <div className="flex items-center gap-2 p-3 bg-primary-container/5 border border-primary-container/20 rounded-xl">
-                <span className="material-symbols-outlined text-primary-container text-2xl">campaign</span>
-                <div>
-                  <div className="text-[10px] font-mono font-bold text-white uppercase">Vocal Resident</div>
-                  <div className="text-[9px] text-white/40 font-light mt-0.5">Filed more than 3 tickets</div>
+              {reportsCount >= 3 && (
+                <div className="flex items-center gap-2 p-3 bg-primary-container/5 border border-primary-container/20 rounded-xl">
+                  <span className="material-symbols-outlined text-primary-container text-2xl">campaign</span>
+                  <div>
+                    <div className="text-[10px] font-mono font-bold text-white uppercase">Vocal Resident</div>
+                    <div className="text-[9px] text-white/40 font-light mt-0.5">Filed 3+ tickets</div>
+                  </div>
                 </div>
-              </div>
-              <div className="flex items-center gap-2 p-3 bg-purple-500/5 border border-purple-500/20 rounded-xl">
-                <span className="material-symbols-outlined text-purple-300 text-2xl">handshake</span>
-                <div>
-                  <div className="text-[10px] font-mono font-bold text-white uppercase">Team Player</div>
-                  <div className="text-[9px] text-white/40 font-light mt-0.5">Received 10+ support votes</div>
+              )}
+              {totalEndorsements >= 10 && (
+                <div className="flex items-center gap-2 p-3 bg-purple-500/5 border border-purple-500/20 rounded-xl">
+                  <span className="material-symbols-outlined text-purple-300 text-2xl">handshake</span>
+                  <div>
+                    <div className="text-[10px] font-mono font-bold text-white uppercase">Team Player</div>
+                    <div className="text-[9px] text-white/40 font-light mt-0.5">Received 10+ support votes</div>
+                  </div>
                 </div>
-              </div>
+              )}
+              {resolvedCount >= 1 && (
+                <div className="flex items-center gap-2 p-3 bg-green-500/5 border border-green-500/20 rounded-xl">
+                  <span className="material-symbols-outlined text-green-400 text-2xl">task_alt</span>
+                  <div>
+                    <div className="text-[10px] font-mono font-bold text-white uppercase">Problem Solver</div>
+                    <div className="text-[9px] text-white/40 font-light mt-0.5">Resolved 1+ tickets</div>
+                  </div>
+                </div>
+              )}
+              {participationScore >= 200 && (
+                <div className="flex items-center gap-2 p-3 bg-yellow-500/5 border border-yellow-500/20 rounded-xl relative overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full animate-[shimmer_2s_infinite]"></div>
+                  <span className="material-symbols-outlined text-yellow-400 text-2xl drop-shadow-[0_0_8px_rgba(250,204,21,0.6)]">workspace_premium</span>
+                  <div className="relative z-10">
+                    <div className="text-[10px] font-mono font-bold text-yellow-400 uppercase">Civic Hero</div>
+                    <div className="text-[9px] text-white/50 font-light mt-0.5">200+ Community Pts</div>
+                  </div>
+                </div>
+              )}
+              {reportsCount < 3 && totalEndorsements < 10 && resolvedCount < 1 && participationScore < 200 && (
+                <div className="text-[10px] font-mono text-white/30 uppercase tracking-widest p-4">
+                  No badges earned yet. Participate in the community to unlock them!
+                </div>
+              )}
             </div>
           </GlassCard>
 

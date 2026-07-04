@@ -61,20 +61,41 @@ export const ReportIssue: React.FC = () => {
   const [submissionProgress, setSubmissionProgress] = useState('');
 
   // AI Assist rewrite engine
-  const handleAiAssist = () => {
+  const handleAiAssist = async () => {
     if (!description.trim()) {
       showToast('Please type a rough description first', 'warning');
       return;
     }
     setIsAiAssisting(true);
-    setTimeout(() => {
-      setTitle('Pothole Hazard near Pedestrian Ramp');
-      setDescription(
-        'Severe deep pothole identified in the center lanes. The defect lies adjacent to the high-traffic pedestrian curb ramp, posing an immediate hazard to passing vehicles and pedestrian crossings.'
-      );
-      setIsAiAssisting(false);
+
+    try {
+      const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+      if (!apiKey) throw new Error("Missing Gemini API Key");
+      const genAI = new GoogleGenerativeAI(apiKey);
+      const model = genAI.getGenerativeModel({ 
+        model: 'gemini-1.5-flash',
+        generationConfig: { responseMimeType: "application/json" }
+      });
+
+      const prompt = `Rewrite the following issue description to be professional, detailed, and objective for a city municipal department. Keep it concise. Also generate a short, punchy title. Return ONLY a JSON object with "title" and "description" keys.\n\nOriginal title: ${title}\nOriginal description: ${description}`;
+      const result = await model.generateContent(prompt);
+      
+      let jsonStr = result.response.text().trim();
+      const match = jsonStr.match(/\{[\s\S]*\}/);
+      if (match) {
+        jsonStr = match[0];
+      }
+      const data = JSON.parse(jsonStr);
+
+      if (data.title) setTitle(data.title);
+      if (data.description) setDescription(data.description);
       showToast('AI optimization complete!', 'success');
-    }, 1200);
+    } catch (e) {
+      console.error(e);
+      showToast('AI assist failed. Please edit manually.', 'error');
+    } finally {
+      setIsAiAssisting(false);
+    }
   };
 
   const simulateAiImageAnalysis = async (base64Image: string) => {
@@ -89,7 +110,10 @@ export const ReportIssue: React.FC = () => {
       }
 
       const genAI = new GoogleGenerativeAI(apiKey);
-      const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+      const model = genAI.getGenerativeModel({ 
+        model: 'gemini-1.5-flash',
+        generationConfig: { responseMimeType: "application/json" }
+      });
 
       const base64Data = base64Image.split(',')[1];
       const mimeType = base64Image.split(';')[0].split(':')[1];
@@ -107,7 +131,11 @@ export const ReportIssue: React.FC = () => {
         { inlineData: { data: base64Data, mimeType } }
       ]);
 
-      const jsonStr = result.response.text().replace(/```json/g, '').replace(/```/g, '').trim();
+      let jsonStr = result.response.text().trim();
+      const match = jsonStr.match(/\{[\s\S]*\}/);
+      if (match) {
+        jsonStr = match[0];
+      }
       const aiData = JSON.parse(jsonStr);
 
       setCategory(aiData.category || 'Other');
@@ -390,10 +418,18 @@ export const ReportIssue: React.FC = () => {
                       />
                       <label
                         htmlFor={`cat-${catName}`}
-                        className="btn-glass flex flex-col items-center justify-center p-4 rounded-xl cursor-pointer hover:border-primary-container/40 border text-center h-24 select-none"
+                        className={`btn-glass flex flex-col items-center justify-center p-4 rounded-xl cursor-pointer transition-all border text-center h-24 select-none ${
+                          category === catName
+                            ? 'bg-primary-container/20 border-primary-container shadow-[0_0_15px_rgba(0,240,255,0.2)]'
+                            : 'hover:border-primary-container/40 border-transparent'
+                        }`}
                       >
-                        <span className="material-symbols-outlined text-white/50 text-2xl group-hover:text-primary-container icon-container transition-colors mb-2">{iconName}</span>
-                        <span className="font-mono text-[9px] uppercase tracking-wider text-white font-bold leading-none">{catName}</span>
+                        <span className={`material-symbols-outlined text-2xl transition-colors mb-2 ${
+                          category === catName ? 'text-primary-container' : 'text-white/50 group-hover:text-primary-container'
+                        }`}>{iconName}</span>
+                        <span className={`font-mono text-[9px] uppercase tracking-wider font-bold leading-none ${
+                          category === catName ? 'text-primary-container' : 'text-white'
+                        }`}>{catName}</span>
                       </label>
                     </div>
                   );

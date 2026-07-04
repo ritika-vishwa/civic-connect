@@ -7,9 +7,10 @@ import { Issue } from '../../context/IssueContext';
 interface IssueCardProps {
   issue: Issue;
   className?: string;
+  layout?: 'row' | 'col';
 }
 
-export const IssueCard: React.FC<IssueCardProps> = ({ issue, className = '' }) => {
+export const IssueCard: React.FC<IssueCardProps> = ({ issue, className = '', layout = 'row' }) => {
   const navigate = useNavigate();
 
   // Map status to progress bar percentage
@@ -45,10 +46,10 @@ export const IssueCard: React.FC<IssueCardProps> = ({ issue, className = '' }) =
   return (
     <GlassCard 
       onClick={() => navigate(`/issues/${issue.id}`)}
-      className={`flex flex-col md:flex-row gap-6 p-5 border border-transparent hover:border-primary-container/30 ${className}`}
+      className={`flex ${layout === 'row' ? 'flex-col md:flex-row' : 'flex-col'} gap-6 p-5 border border-transparent hover:border-primary-container/30 ${className}`}
     >
       {/* Image Thumbnail */}
-      <div className="w-full md:w-44 h-32 rounded-xl overflow-hidden bg-surface-container-lowest border border-white/10 shrink-0 relative">
+      <div className={`w-full ${layout === 'row' ? 'md:w-44' : ''} h-32 rounded-xl overflow-hidden bg-surface-container-lowest border border-white/10 shrink-0 relative`}>
         <img 
           src={issue.image} 
           alt={issue.title}

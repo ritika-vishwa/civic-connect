@@ -9,7 +9,8 @@ import {
   query,
   orderBy,
   arrayUnion,
-  arrayRemove
+  arrayRemove,
+  deleteDoc
 } from 'firebase/firestore';
 import { ref, uploadString, getDownloadURL } from 'firebase/storage';
 import { auth, db, storage } from '../firebase';
@@ -56,6 +57,7 @@ export interface Issue {
   supportedBy: string[];
   department: string;
   assignedWorker?: string;
+  authorId?: string;
   aiAnalysis?: {
     category: string;
     severity: string;
@@ -75,6 +77,8 @@ interface IssueContextProps {
   addComment: (id: string, commentText: string, user: { name: string; avatar: string; role: UserRole }) => Promise<void>;
   updateStatus: (id: string, status: Issue['status'], updateText: string, resolutionImage?: string) => Promise<void>;
   assignWorker: (id: string, workerName: string, department: string) => Promise<void>;
+  deleteIssue: (id: string) => Promise<void>;
+  updateIssue: (id: string, updates: Partial<Issue>) => Promise<void>;
 }
 
 const IssueContext = createContext<IssueContextProps | undefined>(undefined);
@@ -168,6 +172,7 @@ export const IssueProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         status: 'Reported',
         createdAt: new Date().toISOString(),
         supportedBy: auth.currentUser ? [auth.currentUser.uid] : [],
+        authorId: auth.currentUser ? auth.currentUser.uid : '',
         history: [
           {
             id: `h-${Date.now()}`,
@@ -180,6 +185,16 @@ export const IssueProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       };
 
       const docRef = await addDoc(collection(db, 'issues'), newIssueDoc);
+
+      // Push global notification
+      await addDoc(collection(db, 'notifications'), {
+        type: issueData.severity === 'Critical' ? 'critical' : 'alert',
+        title: 'New Issue Reported',
+        description: `${finalCitizenName} reported a ${issueData.severity.toLowerCase()} severity issue in ${issueData.category}: ${issueData.title}`,
+        time: new Date().toISOString(),
+        isRead: false
+      });
+
       return docRef.id;
     } catch (error) {
       console.error("Error adding issue:", error);
@@ -222,6 +237,16 @@ export const IssueProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     };
 
     await addDoc(collection(db, 'comments'), newComment);
+
+    if (newComment.isOfficial) {
+      await addDoc(collection(db, 'notifications'), {
+        type: 'system',
+        title: 'Official Response',
+        description: `An official responded to Ticket ${id}`,
+        time: new Date().toISOString(),
+        isRead: false
+      });
+    }
   };
 
   const updateStatus = async (id: string, status: Issue['status'], updateText: string, resolutionImage?: string) => {
@@ -252,6 +277,14 @@ export const IssueProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
 
     await updateDoc(doc(db, 'issues', id), updateData);
+
+    await addDoc(collection(db, 'notifications'), {
+      type: status === 'Resolved' || status === 'Closed' ? 'resolve' : 'system',
+      title: `Ticket Updated: ${status}`,
+      description: `Ticket ${id} status changed to ${status}.`,
+      time: new Date().toISOString(),
+      isRead: false
+    });
   };
 
   const assignWorker = async (id: string, workerName: string, department: string) => {
@@ -274,8 +307,33 @@ export const IssueProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     });
   };
 
+  const deleteIssue = async (id: string) => {
+    try {
+      await deleteDoc(doc(db, 'issues', id));
+      
+      // Also delete related comments
+      const relatedComments = comments.filter(c => c.issueId === id);
+      for (const comment of relatedComments) {
+        await deleteDoc(doc(db, 'comments', comment.id));
+      }
+    } catch (error) {
+      console.error("Error deleting issue: ", error);
+      throw error;
+    }
+  };
+
+  const updateIssue = async (id: string, updates: Partial<Issue>) => {
+    try {
+      const issueRef = doc(db, 'issues', id);
+      await updateDoc(issueRef, updates);
+    } catch (error) {
+      console.error("Error updating issue: ", error);
+      throw error;
+    }
+  };
+
   return (
-    <IssueContext.Provider value={{ issues, addIssue, supportIssue, addComment, updateStatus, assignWorker }}>
+    <IssueContext.Provider value={{ issues, addIssue, supportIssue, addComment, updateStatus, assignWorker, deleteIssue, updateIssue }}>
       {children}
     </IssueContext.Provider>
   );
