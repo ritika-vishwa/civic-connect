@@ -82,12 +82,12 @@ export const CommandPalette: React.FC = () => {
       {/* Discrete Keyboard shortcut icon */}
       <button 
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 left-6 z-[60] flex items-center justify-center w-10 h-10 rounded-full glass-card border border-white/10 text-white/50 hover:text-white hover:bg-white/10 transition-colors group shadow-lg cursor-pointer"
+        className="fixed bottom-6 right-6 z-[60] flex items-center justify-center w-10 h-10 rounded-full glass-card border border-white/10 text-white/50 hover:text-white hover:bg-white/10 transition-colors group shadow-lg cursor-pointer"
       >
         <span className="material-symbols-outlined text-[20px]">insights</span>
         
         {/* Hover Tooltip */}
-        <div className="absolute left-14 bg-[#00060d] border border-white/20 px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none flex items-center gap-2 whitespace-nowrap shadow-xl">
+        <div className="absolute right-14 bg-[#00060d] border border-white/20 px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none flex items-center gap-2 whitespace-nowrap shadow-xl">
           <span className="text-[10px] font-mono uppercase tracking-widest text-white/70">Search / Navigate</span>
           <div className="flex items-center gap-1">
             <kbd className="bg-white/10 px-1.5 py-0.5 rounded border border-white/20 text-[9px] text-white font-mono">Ctrl</kbd>
