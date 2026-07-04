@@ -99,6 +99,11 @@ export const BackgroundShader: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    // Disable WebGL rendering on mobile/tablet to prevent high GPU/CPU performance lag
+    if (window.innerWidth < 768) {
+      return;
+    }
+
     if (!containerRef.current) return;
 
     const container = containerRef.current;
@@ -174,8 +179,11 @@ export const BackgroundShader: React.FC = () => {
   return (
     <div 
       ref={containerRef} 
-      className="fixed inset-0 w-full h-full -z-10 bg-surface-container-lowest pointer-events-none" 
-      style={{ display: 'block' }}
-    />
+      className="fixed inset-0 w-full h-full -z-10 bg-[#00060d] pointer-events-none overflow-hidden" 
+    >
+      {/* Mobile-only lightweight CSS ambient glows (smooth, GPU-accelerated) */}
+      <div className="absolute md:hidden top-[-10%] left-[-20%] w-[80vw] h-[80vw] rounded-full bg-primary-container/10 blur-[100px]" />
+      <div className="absolute md:hidden bottom-[-10%] right-[-20%] w-[80vw] h-[80vw] rounded-full bg-purple-500/10 blur-[100px]" />
+    </div>
   );
 };
