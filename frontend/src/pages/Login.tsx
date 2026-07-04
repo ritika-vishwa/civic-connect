@@ -117,21 +117,7 @@ export const Login: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center py-10 px-4 bg-[#00060d] font-body-sm relative overflow-hidden text-white">
-      
-      {/* Top Left Back Button */}
-      <motion.button 
-        initial={{ opacity: 0, x: -20 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ delay: 0.5 }}
-        onClick={() => navigate(user ? '/dashboard' : '/')}
-        className="absolute top-6 left-6 z-20 flex items-center gap-2 text-white/50 hover:text-white transition-colors text-sm font-medium"
-      >
-        <span className="material-symbols-outlined text-[18px]">arrow_back</span>
-        {user ? 'Back to Dashboard' : 'Back to Home'}
-      </motion.button>
-
-      {/* Removed the background glow effect to prevent green flash */}
+    <div className="w-full flex items-center justify-center font-body-sm text-white">
 
       <motion.div 
         variants={containerVariants}

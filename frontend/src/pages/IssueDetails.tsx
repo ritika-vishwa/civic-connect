@@ -144,20 +144,22 @@ export const IssueDetails: React.FC = () => {
       />
 
       {/* Hero Image Section */}
-      <div className="relative w-full h-80 rounded-2xl overflow-hidden border border-white/10 shadow-xl bg-surface-container-lowest">
-        <img 
-          src={issue.image} 
-          alt={issue.title} 
-          onError={(e) => {
-            (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1518005020951-eccb494ad742?auto=format&fit=crop&q=80&w=1200';
-          }}
-          className="w-full h-full object-cover opacity-80"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#031427] via-[#031427]/40 to-transparent" />
+      <div className="relative w-full flex flex-col md:block md:h-96 rounded-2xl overflow-hidden border border-white/10 shadow-xl bg-[#031427]">
+        <div className="w-full h-64 md:absolute md:inset-0 md:h-full">
+          <img 
+            src={issue.image} 
+            alt={issue.title} 
+            onError={(e) => {
+              (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1518005020951-eccb494ad742?auto=format&fit=crop&q=80&w=1200';
+            }}
+            className="w-full h-full object-cover opacity-80"
+          />
+          <div className="hidden md:block absolute inset-0 bg-gradient-to-t from-[#031427] via-[#031427]/40 to-transparent" />
+        </div>
         
         {/* Floating Details */}
-        <div className="absolute bottom-6 left-6 right-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
-          <div>
+        <div className="relative md:absolute md:bottom-6 md:left-6 md:right-6 p-6 md:p-0 flex flex-col md:flex-row md:items-end justify-between gap-6 bg-[#031427]/90 md:bg-transparent backdrop-blur-xl md:backdrop-blur-none border-t border-white/10 md:border-t-0">
+          <div className="min-w-0 flex-1">
             <div className="flex items-center gap-3 flex-wrap">
               <span className="text-xs font-mono text-primary-container bg-primary-container/15 border border-primary-container/30 px-3 py-1 rounded-md font-bold uppercase tracking-widest">
                 Ticket {issue.id}
@@ -165,40 +167,40 @@ export const IssueDetails: React.FC = () => {
               <StatusBadge value={issue.severity} type="severity" />
               <StatusBadge value={issue.status} type="status" />
             </div>
-            <h1 className="font-display-lg text-2xl md:text-4xl font-black text-white uppercase tracking-tight drop-shadow-md mt-4">
+            <h1 className="font-display-lg text-xl sm:text-2xl md:text-4xl font-black text-white uppercase tracking-tight drop-shadow-md mt-4 break-words leading-tight">
               {issue.title}
             </h1>
-            <p className="text-xs font-mono text-white/50 mt-1 flex items-center gap-1">
+            <p className="text-xs font-mono text-white/50 mt-2 flex items-center gap-1">
               <span className="material-symbols-outlined text-xs">location_on</span>
               {issue.location.address}
             </p>
           </div>
 
           {/* Action Buttons */}
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3 w-full md:w-auto mt-2 md:mt-0">
             {canEdit && (
               <button
                 onClick={() => setShowEditModal(true)}
-                className="px-5 py-3 rounded-xl text-xs font-bold uppercase tracking-widest border border-white/20 bg-white/5 text-white hover:bg-white/10 transition-all flex items-center gap-2 cursor-pointer shrink-0"
+                className="px-5 py-3 rounded-xl text-xs font-bold uppercase tracking-widest border border-white/20 bg-white/5 text-white hover:bg-white/10 transition-all flex items-center justify-center gap-2 cursor-pointer grow md:grow-0 shrink-0 min-h-[44px]"
               >
                 <span className="material-symbols-outlined text-[18px]">edit</span>
-                <span className="hidden sm:inline">Edit</span>
+                <span>Edit</span>
               </button>
             )}
             {canDelete && (
               <button
                 onClick={() => setShowConfirmDelete(true)}
-                className="px-5 py-3 rounded-xl text-xs font-bold uppercase tracking-widest border border-error/50 bg-error/10 text-error hover:bg-error hover:text-white transition-all flex items-center gap-2 cursor-pointer shrink-0"
+                className="px-5 py-3 rounded-xl text-xs font-bold uppercase tracking-widest border border-error/50 bg-error/10 text-error hover:bg-error hover:text-white transition-all flex items-center justify-center gap-2 cursor-pointer grow md:grow-0 shrink-0 min-h-[44px]"
               >
                 <span className="material-symbols-outlined text-[18px]">delete</span>
-                <span className="hidden sm:inline">Delete</span>
+                <span>Delete</span>
               </button>
             )}
             <button
               onClick={handleSupport}
               disabled={!canSupport}
               title={!canSupport ? 'Log in to endorse this report' : ''}
-              className={`px-5 py-3 rounded-xl text-xs font-bold uppercase tracking-widest border transition-all flex items-center gap-2 shrink-0 ${
+              className={`px-5 py-3 rounded-xl text-xs font-bold uppercase tracking-widest border transition-all flex items-center justify-center gap-2 grow md:grow-0 shrink-0 min-h-[44px] ${
                 !canSupport
                   ? 'opacity-40 cursor-not-allowed bg-white/5 border-white/10 text-white/50'
                   : issue.isSupportedByCurrentUser
@@ -380,7 +382,14 @@ export const IssueDetails: React.FC = () => {
                   onClick={() => navigate(`/issues/${nearby.id}`)}
                   className="p-3 bg-black/10 border border-white/5 rounded-xl hover:border-primary-container/30 cursor-pointer flex gap-3 transition-all"
                 >
-                  <img src={nearby.image} alt={nearby.title} className="w-12 h-10 object-cover rounded-lg border border-white/10 shrink-0" />
+                  <img 
+                    src={nearby.image} 
+                    alt={nearby.title} 
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1518005020951-eccb494ad742?auto=format&fit=crop&q=80&w=1200';
+                    }}
+                    className="w-12 h-10 object-cover rounded-lg border border-white/10 shrink-0" 
+                  />
                   <div className="overflow-hidden">
                     <div className="text-[10px] font-bold text-white uppercase tracking-tight truncate">{nearby.title}</div>
                     <span className="text-[8px] font-mono text-primary-container mt-0.5 block">{nearby.id} • {nearby.status}</span>

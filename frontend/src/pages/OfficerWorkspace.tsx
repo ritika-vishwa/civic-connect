@@ -162,7 +162,14 @@ export const OfficerWorkspace: React.FC = () => {
                     {activeIssue.description}
                   </p>
                   <div className="w-full h-32 rounded-lg overflow-hidden border border-white/10">
-                    <img src={activeIssue.image} alt="Ticket evidence" className="w-full h-full object-cover" />
+                    <img 
+                      src={activeIssue.image} 
+                      alt="Ticket evidence" 
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1518005020951-eccb494ad742?auto=format&fit=crop&q=80&w=1200';
+                      }}
+                      className="w-full h-full object-cover" 
+                    />
                   </div>
                   <div className="text-[9px] font-mono text-white/40 uppercase flex justify-between">
                     <span>Filed by: {activeIssue.citizenName}</span>

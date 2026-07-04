@@ -437,7 +437,14 @@ END:VCALENDAR`;
                 
                 {/* Header Image */}
                 <div className="h-44 w-full overflow-hidden bg-surface-container-lowest border-b border-white/10 relative">
-                  <img src={evt.image} alt={evt.title} className="w-full h-full object-cover" />
+                  <img 
+                    src={evt.image} 
+                    alt={evt.title} 
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1518005020951-eccb494ad742?auto=format&fit=crop&q=80&w=1200';
+                    }}
+                    className="w-full h-full object-cover" 
+                  />
                   
                   {/* Category chip */}
                   <span className={`absolute top-4 left-4 border text-[9px] uppercase font-bold tracking-widest px-2.5 py-1 rounded-md ${getCategoryColor(evt.category)}`}>

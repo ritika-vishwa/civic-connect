@@ -138,7 +138,14 @@ export const CitizenProfileStats: React.FC<CitizenProfileStatsProps> = ({
               return (
                 <GlassCard key={evt.id} noHover className="flex gap-4 p-4 border border-white/10 overflow-hidden relative">
                   <div className="w-20 h-24 rounded-lg overflow-hidden shrink-0 border border-white/10 relative">
-                    <img src={evt.image} alt={evt.title} className="w-full h-full object-cover" />
+                    <img 
+                      src={evt.image} 
+                      alt={evt.title} 
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1518005020951-eccb494ad742?auto=format&fit=crop&q=80&w=1200';
+                      }}
+                      className="w-full h-full object-cover" 
+                    />
                     <div className="absolute inset-0 bg-[#031427]/80 flex flex-col items-center justify-center">
                       <span className="font-display-lg text-xl font-black text-white leading-none">{day}</span>
                       <span className="font-mono text-[9px] text-primary-container font-bold tracking-wider">{month}</span>
