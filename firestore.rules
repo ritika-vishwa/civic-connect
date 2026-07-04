@@ -170,5 +170,15 @@ service cloud.firestore {
       // Anyone can submit a support ticket (authenticated or not)
       allow create: if true;
     }
+
+    // ─── Emergency Alerts Collection ──────────────────────────────────────────
+
+    match /emergency_alerts/{alertId} {
+      // Anyone can read emergency alerts
+      allow read: if true;
+
+      // Only officials and admins can write/create/delete emergency alerts
+      allow create, update, delete: if isSignedIn() && (isOfficial() || isAdmin());
+    }
   }
 }
