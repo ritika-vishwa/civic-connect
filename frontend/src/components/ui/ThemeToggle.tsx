@@ -22,7 +22,7 @@ export const ThemeToggle: React.FC = () => {
   return (
     <button
       onClick={toggleTheme}
-      className="fixed bottom-[72px] right-6 z-[60] flex items-center justify-center w-10 h-10 rounded-full glass-card border border-white/10 text-white/50 hover:text-white hover:bg-white/10 transition-colors group shadow-lg cursor-pointer bg-[#00060d]/80 backdrop-blur-md"
+      className="fixed top-24 right-6 z-[60] flex items-center justify-center w-10 h-10 rounded-full glass-card border border-white/10 text-white/50 hover:text-white hover:bg-white/10 transition-colors group shadow-lg cursor-pointer bg-[#00060d]/80 backdrop-blur-md"
       aria-label="Toggle Theme"
     >
       <span className="material-symbols-outlined text-[20px]">

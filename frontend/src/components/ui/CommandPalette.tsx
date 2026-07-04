@@ -82,7 +82,7 @@ export const CommandPalette: React.FC = () => {
       {/* Discrete Keyboard shortcut icon */}
       <button 
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 z-[60] flex items-center justify-center w-10 h-10 rounded-full glass-card border border-white/10 text-white/50 hover:text-white hover:bg-white/10 transition-colors group shadow-lg cursor-pointer"
+        className="fixed top-40 right-6 z-[60] flex items-center justify-center w-10 h-10 rounded-full glass-card border border-white/10 text-white/50 hover:text-white hover:bg-white/10 transition-colors group shadow-lg cursor-pointer"
       >
         <span className="material-symbols-outlined text-[20px]">insights</span>
         
