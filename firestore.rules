@@ -47,9 +47,14 @@ service cloud.firestore {
     match /users/{userId} {
       // Anyone logged in can read their own document; admins can read all
       allow read: if isSignedIn() && (request.auth.uid == userId || isAdmin());
-      // Users can only write to their own document (profile updates, avatar)
-      // Admins can write any document (role management)
-      allow write: if (isSignedIn() && request.auth.uid == userId) || isAdmin();
+      // Users can update their own document BUT cannot change their own role
+      // Only admins can write the role field
+      allow create: if isSignedIn() && request.auth.uid == userId;
+      allow update: if
+        (isSignedIn() && request.auth.uid == userId &&
+          !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role']))
+        || isAdmin();
+      allow delete: if isAdmin();
     }
 
     // ─── Issues Collection ────────────────────────────────────────────────────

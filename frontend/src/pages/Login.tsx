@@ -33,10 +33,10 @@ export const Login: React.FC = () => {
     try {
       if (isSignUp) {
         await signup(name, email, password, role, locality);
-        showToast('Account created successfully!', 'success');
+        showToast(`Account created! Logged in as ${role.toUpperCase()}`, 'success');
       } else {
-        await login(email, password, role);
-        showToast(`Welcome back! Logged in as ${role.toUpperCase()}`, 'success');
+        await login(email, password);
+        showToast('Welcome back!', 'success');
       }
       navigate('/dashboard');
     } catch (err: any) {
@@ -59,7 +59,7 @@ export const Login: React.FC = () => {
 
   const handleGoogleLogin = async () => {
     try {
-      await loginWithGoogle(role);
+      await loginWithGoogle();
       showToast('Successfully logged in with Google', 'success');
       navigate('/dashboard');
     } catch (err) {
@@ -68,13 +68,9 @@ export const Login: React.FC = () => {
   };
 
   const handleQuickDemo = async () => {
-    setEmail('citizen@demo.com');
-    setPassword('demo123');
-    setRole('citizen');
-    // We let state update, then submit. Since state update is async, we can just call login directly here for speed
     setIsSubmitting(true);
     try {
-      await login('citizen@demo.com', 'demo123', 'citizen');
+      await login('citizen@demo.com', 'demo123');
       showToast('Demo login successful', 'success');
       navigate('/dashboard');
     } catch (err) {
@@ -298,23 +294,36 @@ export const Login: React.FC = () => {
             </div>
           )}
 
-          {/* Role Selector */}
-          <div className="flex bg-[#031427]/80 backdrop-blur-md border border-white/10 rounded-xl overflow-hidden p-1">
-            {(['citizen', 'official', 'moderator', 'admin'] as UserRole[]).map((r) => (
-              <button
-                key={r}
-                type="button"
-                onClick={() => setRole(r)}
-                className={`flex-1 py-2 text-[10px] uppercase tracking-widest font-bold rounded-lg transition-all ${
-                  role === r 
-                    ? 'bg-primary-container/20 text-primary-container shadow-[0_0_10px_rgba(0,240,255,0.1)]' 
-                    : 'text-white/30 hover:text-white/50'
-                }`}
+          {/* Role Selector — only shown during Sign Up */}
+          <AnimatePresence>
+            {isSignUp && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.3 }}
+                className="overflow-hidden"
               >
-                {r}
-              </button>
-            ))}
-          </div>
+                <p className="text-[10px] font-mono text-white/40 uppercase tracking-widest mb-2 text-center">Select your role (permanent — cannot be changed after signup)</p>
+                <div className="flex bg-[#031427]/80 backdrop-blur-md border border-white/10 rounded-xl overflow-hidden p-1">
+                  {(['citizen', 'official', 'moderator'] as UserRole[]).map((r) => (
+                    <button
+                      key={r}
+                      type="button"
+                      onClick={() => setRole(r)}
+                      className={`flex-1 py-2 text-[10px] uppercase tracking-widest font-bold rounded-lg transition-all ${
+                        role === r
+                          ? 'bg-primary-container/20 text-primary-container shadow-[0_0_10px_rgba(0,240,255,0.1)]'
+                          : 'text-white/30 hover:text-white/50'
+                      }`}
+                    >
+                      {r}
+                    </button>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           <motion.button
             whileHover={{ scale: 1.02 }}

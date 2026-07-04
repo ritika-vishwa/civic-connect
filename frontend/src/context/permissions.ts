@@ -23,10 +23,16 @@ export const canReportIssue = (user: User | null): boolean => {
   return ['citizen', 'moderator', 'admin'].includes(user.role);
 };
 
-/** Can participate in community discussions (post, comment) */
+/** Can participate in community discussions (comment on posts) */
 export const canParticipateInDiscussions = (user: User | null): boolean => {
   if (!user) return false;
   return ['citizen', 'official', 'moderator', 'admin'].includes(user.role);
+};
+
+/** Can create top-level community posts / notices / announcements */
+export const canCreateCommunityPost = (user: User | null): boolean => {
+  if (!user) return false;
+  return ['official', 'moderator', 'admin'].includes(user.role);
 };
 
 /** Can support/endorse a complaint */

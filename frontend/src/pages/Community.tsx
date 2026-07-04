@@ -8,6 +8,7 @@ import { ref, uploadString, getDownloadURL } from 'firebase/storage';
 import { db, storage } from '../firebase';
 import {
   canParticipateInDiscussions,
+  canCreateCommunityPost,
   canSupportIssue,
   canModerateContent,
   canDeleteAnyPost,
@@ -52,7 +53,8 @@ export const Community: React.FC = () => {
   const { user } = useAuth();
   const { showToast } = useNotification();
 
-  const canPost = canParticipateInDiscussions(user) && user?.role !== 'official';
+  const canPost = canCreateCommunityPost(user);
+  const canComment = canParticipateInDiscussions(user);
   const canUpvote = canSupportIssue(user);
   const canModerate = canModerateContent(user);
   const canDeletePost = canDeleteAnyPost(user);
@@ -385,24 +387,33 @@ export const Community: React.FC = () => {
                   ))}
 
                   {/* Comment input - only for users who can participate */}
-                  {canPost ? (
-                    <div className="flex gap-2 mt-2">
-                      <input
-                        type="text"
-                        placeholder="Write a comment..."
-                        value={newCommentText}
-                        onChange={(e) => setNewCommentText(e.target.value)}
-                        className="input-glass px-3 py-2 rounded-xl text-xs w-full font-mono uppercase tracking-wider"
-                      />
-                      <button
-                        onClick={() => handleAddComment(post.id)}
-                        className="btn-gradient-cyan px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest cursor-pointer"
-                      >
-                        Post
-                      </button>
+                  {canComment ? (
+                    <div className="flex gap-4 mt-4">
+                      <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center shrink-0 border border-white/10 text-white/50">
+                        <span className="material-symbols-outlined text-[16px]">person</span>
+                      </div>
+                      <div className="flex-1 flex gap-2">
+                        <input
+                          type="text"
+                          value={activeCommentPostId === post.id ? newCommentText : ''}
+                          onChange={(e) => {
+                            setActiveCommentPostId(post.id);
+                            setNewCommentText(e.target.value);
+                          }}
+                          onKeyDown={(e) => e.key === 'Enter' && handleAddComment(post.id)}
+                          placeholder="Write a comment..."
+                          className="flex-1 bg-[#000f21] border border-white/10 rounded-xl px-4 py-2 text-sm font-mono placeholder-white/30"
+                        />
+                        <button
+                          onClick={() => handleAddComment(post.id)}
+                          className="bg-primary-container/20 text-primary-container px-4 py-2 rounded-xl border border-primary-container/30 hover:bg-primary-container/40 transition-colors font-bold text-xs uppercase tracking-widest"
+                        >
+                          Post
+                        </button>
+                      </div>
                     </div>
                   ) : (
-                    <p className="text-[10px] font-mono text-white/30 uppercase tracking-widest text-center py-2">
+                    <p className="text-[10px] font-mono text-white/30 uppercase tracking-widest text-center py-2 mt-2">
                       Log in to participate in discussions
                     </p>
                   )}

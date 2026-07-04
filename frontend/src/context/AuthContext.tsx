@@ -11,7 +11,7 @@ import {
   browserSessionPersistence,
   sendPasswordResetEmail
 } from 'firebase/auth';
-import { doc, getDoc, setDoc, deleteDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, deleteDoc, onSnapshot, collection, query, where, getDocs } from 'firebase/firestore';
 import { auth, db } from '../firebase';
 
 export type UserRole = 'citizen' | 'official' | 'moderator' | 'admin';
@@ -29,9 +29,9 @@ export interface User {
 interface AuthContextProps {
   user: User | null;
   loading: boolean;
-  login: (email: string, password: string, role: UserRole) => Promise<void>;
+  login: (email: string, password: string) => Promise<void>;
   signup: (name: string, email: string, password: string, role: UserRole, locality?: string) => Promise<void>;
-  loginWithGoogle: (role: UserRole) => Promise<void>;
+  loginWithGoogle: () => Promise<void>;
   logout: () => void;
   deleteAccount: () => Promise<void>;
   switchRole: (role: UserRole) => void;
@@ -85,17 +85,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Force session persistence so the user is logged out when they close the browser
     setPersistence(auth, browserSessionPersistence).catch(console.error);
 
+    let userDocUnsubscribe: (() => void) | null = null;
+
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
-        // Fetch user document from Firestore
-        try {
-          const userDocRef = doc(db, 'users', firebaseUser.uid);
-          const userDoc = await getDoc(userDocRef);
-          
-          if (userDoc.exists()) {
-            setUser({ uid: firebaseUser.uid, ...userDoc.data() } as User);
+        const userDocRef = doc(db, 'users', firebaseUser.uid);
+        
+        // Listen to Firestore document in real-time
+        userDocUnsubscribe = onSnapshot(userDocRef, async (userDocSnap) => {
+          if (userDocSnap.exists()) {
+            setUser({ uid: firebaseUser.uid, ...userDocSnap.data() } as User);
           } else {
-            // Document doesn't exist, fallback to citizen
+            // Document doesn't exist, create fallback citizen
             const newUser: User = {
               uid: firebaseUser.uid,
               email: firebaseUser.email || '',
@@ -106,75 +107,55 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             await setDoc(userDocRef, newUser);
             setUser(newUser);
           }
-        } catch (error) {
+          setLoading(false);
+        }, (error) => {
           console.error("Error fetching user data:", error);
           setUser(null);
-        }
+          setLoading(false);
+        });
       } else {
+        if (userDocUnsubscribe) {
+          userDocUnsubscribe();
+          userDocUnsubscribe = null;
+        }
         setUser(null);
+        setLoading(false);
       }
-      setLoading(false);
     });
 
-    return () => unsubscribe();
+    return () => {
+      unsubscribe();
+      if (userDocUnsubscribe) userDocUnsubscribe();
+    };
   }, []);
 
-  const login = async (email: string, password: string, role: UserRole) => {
+  const login = async (email: string, password: string) => {
     try {
-      // 1. Try logging in
+      // 1. Authenticate with Firebase
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       
-      // 2. Ensure their user document exists and update their role to what they selected
+      // 2. Load role from Firestore — do NOT overwrite it
       const userDocRef = doc(db, 'users', userCredential.user.uid);
       const userDocSnap = await getDoc(userDocRef);
-      const profile = FALLBACK_PROFILES[role];
       
-      if (!userDocSnap.exists()) {
-        const userDoc: User = {
+      if (userDocSnap.exists()) {
+        // Always use the role stored in Firestore — cannot be overridden from UI
+        setUser({ uid: userCredential.user.uid, ...userDocSnap.data() } as User);
+      } else {
+        // Brand-new account with no Firestore doc yet — default to citizen
+        const newUser: User = {
           uid: userCredential.user.uid,
           email: email,
-          role: role,
-          name: profile.name || 'User',
-          avatar: generateInitialAvatar(profile.name || 'User'),
-          ...(profile.department && { department: profile.department })
+          role: 'citizen',
+          name: 'New Citizen',
+          avatar: generateInitialAvatar('New Citizen')
         };
-        await setDoc(userDocRef, userDoc);
-        setUser(userDoc);
-      } else {
-        // Update their role to match their selection (preserves the mock UI flow)
-        await setDoc(userDocRef, { role: role }, { merge: true });
-        const updatedDoc = await getDoc(userDocRef);
-        setUser({ uid: userCredential.user.uid, ...updatedDoc.data() } as User);
+        await setDoc(userDocRef, newUser);
+        setUser(newUser);
       }
       
     } catch (error: any) {
-      // 3. If it fails, check if it's the demo account
-      if (email === 'citizen@demo.com' && (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential' || error.code === 'auth/invalid-login-credentials')) {
-        try {
-          const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-          const newUser = userCredential.user;
-          
-          const profile = FALLBACK_PROFILES[role];
-          const userDoc: User = {
-            uid: newUser.uid,
-            email: email,
-            role: role,
-            name: profile.name || 'User',
-            avatar: generateInitialAvatar(profile.name || 'User'),
-            ...(profile.department && { department: profile.department }),
-            ...(profile.locality && { locality: profile.locality })
-          };
-          
-          await setDoc(doc(db, 'users', newUser.uid), userDoc);
-          setUser(userDoc);
-          return;
-        } catch (signupError) {
-          console.error("Demo signup failed:", signupError);
-          throw signupError;
-        }
-      }
-      
-      console.error("Login failed:", error);
+      console.error('Login failed:', error);
       throw error;
     }
   };
@@ -203,38 +184,52 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const loginWithGoogle = async (role: UserRole) => {
+  const loginWithGoogle = async () => {
     try {
       const provider = new GoogleAuthProvider();
-      provider.setCustomParameters({
-        prompt: 'select_account'
-      });
+      provider.setCustomParameters({ prompt: 'select_account' });
       const userCredential = await signInWithPopup(auth, provider);
       
+      const email = userCredential.user.email || '';
       const userDocRef = doc(db, 'users', userCredential.user.uid);
       const userDocSnap = await getDoc(userDocRef);
-      const profile = FALLBACK_PROFILES[role];
       
       if (!userDocSnap.exists()) {
-        const finalName = userCredential.user.displayName || profile.name || 'User';
+        let assignedRole: UserRole = 'citizen';
+
+        // If no document exists for this exact UID, check if this email exists elsewhere in the database 
+        // (e.g. pre-provisioned by an admin). If so, inherit that role.
+        if (email) {
+          const usersRef = collection(db, 'users');
+          const q = query(usersRef, where('email', '==', email));
+          const querySnapshot = await getDocs(q);
+          
+          if (!querySnapshot.empty) {
+            const existingUserDoc = querySnapshot.docs[0].data();
+            if (existingUserDoc.role) {
+              assignedRole = existingUserDoc.role as UserRole;
+            }
+          }
+        }
+
+        // Create the Google user with the resolved role
+        const finalName = userCredential.user.displayName || 'Citizen User';
         const userDoc: User = {
           uid: userCredential.user.uid,
-          email: userCredential.user.email || '',
-          role: role,
+          email: email,
+          role: assignedRole,
           name: finalName,
           avatar: userCredential.user.photoURL || generateInitialAvatar(finalName),
-          ...(profile.department && { department: profile.department }),
-          ...(profile.locality && { locality: profile.locality })
+          locality: 'Unknown Locality'
         };
         await setDoc(userDocRef, userDoc);
         setUser(userDoc);
       } else {
-        await setDoc(userDocRef, { role: role }, { merge: true });
-        const updatedDoc = await getDoc(userDocRef);
-        setUser({ uid: userCredential.user.uid, ...updatedDoc.data() } as User);
+        // Existing account: always load role from Firestore — never overwrite it
+        setUser({ uid: userCredential.user.uid, ...userDocSnap.data() } as User);
       }
     } catch (error) {
-      console.error("Google login failed:", error);
+      console.error('Google login failed:', error);
       throw error;
     }
   };
