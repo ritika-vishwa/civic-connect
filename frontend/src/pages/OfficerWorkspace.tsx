@@ -29,13 +29,19 @@ export const OfficerWorkspace: React.FC = () => {
   // Selected issue
   const activeIssue = issues.find(i => i.id === selectedIssueId);
 
-  // Departments list
-  const departments = ['All', 'Public Works', 'Sanitation', 'Traffic Control', 'Urban Operations'];
+  // Departments list - officials are restricted to their own department
+  const departments = user?.role === 'official' && user?.department 
+    ? [user.department] 
+    : ['All', 'Public Works', 'Sanitation', 'Traffic Control', 'Urban Operations'];
 
   // Workers mock data
   const workers = ['Robert Carter', 'Lisa Wong', 'David Brooks', 'Sarah Jenkins', 'Marcus Vance'];
 
   const filtered = issues.filter(issue => {
+    // Strictly restrict officials to their department
+    if (user?.role === 'official' && user?.department) {
+      if (issue.department !== user.department) return false;
+    }
     const dept = filterDepartment === 'All' ? 'All' : filterDepartment;
     const matchesDept = dept === 'All' || issue.department === dept;
     const isNotClosed = issue.status !== 'Closed';
