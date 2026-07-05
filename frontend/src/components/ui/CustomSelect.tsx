@@ -52,7 +52,7 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({ value, onChange, opt
             animate={{ opacity: 1, y: 0, scaleY: 1 }}
             exit={{ opacity: 0, y: -10, scaleY: 0.95 }}
             transition={{ duration: 0.2, ease: "easeOut" }}
-            className="absolute top-[calc(100%+8px)] left-0 w-full z-[100] origin-top"
+            className="absolute top-[calc(100%+8px)] left-0 min-w-full w-max z-[100] origin-top"
           >
             <div className="relative overflow-hidden rounded-xl border border-primary-container/40 shadow-[0_20px_50px_rgba(0,0,0,0.9)] bg-[#031427]/95 backdrop-blur-3xl flex flex-col p-1.5">
               <div className="relative z-10 flex flex-col gap-1 max-h-64 overflow-y-auto custom-scrollbar">
@@ -65,7 +65,7 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({ value, onChange, opt
                     <button
                       key={optValue}
                       onClick={(e) => { e.preventDefault(); onChange(optValue); setIsOpen(false); }}
-                      className={`py-2.5 px-4 text-xs uppercase tracking-widest text-left rounded-lg transition-all flex items-center gap-2 border ${
+                      className={`py-2.5 px-4 text-xs uppercase tracking-widest text-left rounded-lg transition-all flex items-center gap-2 border whitespace-nowrap ${
                         value === optValue 
                           ? 'bg-primary-container/20 border-primary-container/50 text-primary-container shadow-[0_0_15px_rgba(0,240,255,0.2)] font-bold' 
                           : 'border-transparent text-white/70 hover:bg-white/5 hover:border-white/10 hover:text-white font-medium'

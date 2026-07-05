@@ -172,25 +172,29 @@ export const OfficerWorkspace: React.FC = () => {
 
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-2">
-            <span className="text-[9px] font-mono text-white/40 uppercase">Queue:</span>
-            <CustomSelect
-              value={filterDepartment}
-              onChange={(val) => setFilterDepartment(val)}
-              options={departments}
-            />
+            <span className="text-[9px] font-mono text-white/40 uppercase hidden sm:block">Queue:</span>
+            <div className="w-[130px] sm:w-[160px]">
+              <CustomSelect
+                value={filterDepartment}
+                onChange={(val) => setFilterDepartment(val)}
+                options={departments}
+              />
+            </div>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-[9px] font-mono text-white/40 uppercase">Sort:</span>
-            <CustomSelect
-              value={sortBy}
-              onChange={(val) => setSortBy(val as any)}
-              options={[
-                { label: 'Smart Priority', value: 'priority' },
-                { label: 'Date Reported', value: 'newest' },
-                { label: 'Severity', value: 'severity' },
-                { label: 'Support Count', value: 'support' }
-              ]}
-            />
+            <span className="text-[9px] font-mono text-white/40 uppercase hidden sm:block">Sort:</span>
+            <div className="w-[130px] sm:w-[160px]">
+              <CustomSelect
+                value={sortBy}
+                onChange={(val) => setSortBy(val as any)}
+                options={[
+                  { label: 'Smart Priority', value: 'priority' },
+                  { label: 'Date Reported', value: 'newest' },
+                  { label: 'Severity', value: 'severity' },
+                  { label: 'Support Count', value: 'support' }
+                ]}
+              />
+            </div>
           </div>
         </div>
       </div>
