@@ -95,18 +95,13 @@ export const Profile: React.FC = () => {
     try {
       let avatarUrl = '';
       try {
-        const avatarRef = ref(storage, `avatars/${user.uid}-${Date.now()}`);
-        await uploadBytes(avatarRef, croppedFile);
-        avatarUrl = await getDownloadURL(avatarRef);
-      } catch (storageErr) {
-        console.warn("Firebase Storage avatar upload failed, falling back to backend upload:", storageErr);
         const formData = new FormData();
         formData.append('image', croppedFile);
         
         const response = await fetchWithTimeout(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/upload`, {
           method: 'POST',
           body: formData,
-        }, 1800);
+        }, 15000);
 
         if (!response.ok) {
           throw new Error('Upload failed');
@@ -114,6 +109,8 @@ export const Profile: React.FC = () => {
 
         const data = await response.json();
         avatarUrl = data.url;
+      } catch (uploadErr) {
+        throw uploadErr;
       }
 
       await updateUserAvatar(avatarUrl);

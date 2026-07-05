@@ -19,14 +19,29 @@ export interface EmergencyAlert {
 export const EmergencyAlertsBanner: React.FC = () => {
   const { user } = useAuth();
   const [alerts, setAlerts] = useState<EmergencyAlert[]>([]);
+  const storageKey = `dismissed_civic_alerts_${user?.uid || 'guest'}`;
+
   const [dismissedIds, setDismissedIds] = useState<string[]>(() => {
     try {
-      const saved = localStorage.getItem('dismissed_civic_alerts');
+      const saved = localStorage.getItem(storageKey);
       return saved ? JSON.parse(saved) : [];
     } catch {
       return [];
     }
   });
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(storageKey);
+      if (saved) {
+        setDismissedIds(JSON.parse(saved));
+      } else {
+        setDismissedIds([]);
+      }
+    } catch {
+      setDismissedIds([]);
+    }
+  }, [storageKey]);
 
   useEffect(() => {
     const q = query(
@@ -51,7 +66,7 @@ export const EmergencyAlertsBanner: React.FC = () => {
   const handleDismiss = (id: string) => {
     const updated = [...dismissedIds, id];
     setDismissedIds(updated);
-    localStorage.setItem('dismissed_civic_alerts', JSON.stringify(updated));
+    localStorage.setItem(storageKey, JSON.stringify(updated));
   };
 
   const activeAlerts = alerts.filter(alert => !dismissedIds.includes(alert.id));

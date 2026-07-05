@@ -334,7 +334,7 @@ export const Community: React.FC = () => {
               )}
 
               {/* Interactions bar */}
-              <div className="flex items-center gap-6 border-t border-white/10 pt-4 mt-2">
+              <div className="flex flex-wrap items-center gap-4 sm:gap-6 border-t border-white/10 pt-4 mt-2">
                 <button
                   onClick={() => handleUpvote(post.id)}
                   disabled={!canUpvote}
