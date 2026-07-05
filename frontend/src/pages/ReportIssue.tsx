@@ -186,7 +186,7 @@ export const ReportIssue: React.FC = () => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ image: base64Image })
-      }, 1800);
+      }, 20000);
 
       if (response.ok) {
         const data = await response.json();
@@ -299,7 +299,7 @@ export const ReportIssue: React.FC = () => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ image: base64Image })
-      }, 1800);
+      }, 20000);
 
       if (!response.ok) {
         throw new Error('Failed to analyze image');

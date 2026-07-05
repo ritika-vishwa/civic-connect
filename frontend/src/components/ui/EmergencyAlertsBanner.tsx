@@ -46,8 +46,7 @@ export const EmergencyAlertsBanner: React.FC = () => {
   useEffect(() => {
     const q = query(
       collection(db, 'emergency_alerts'),
-      where('active', '==', true),
-      orderBy('createdAt', 'desc')
+      where('active', '==', true)
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -55,6 +54,10 @@ export const EmergencyAlertsBanner: React.FC = () => {
         id: doc.id,
         ...doc.data()
       })) as EmergencyAlert[];
+      
+      // Sort locally to bypass Firebase composite index requirements
+      fetched.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      
       setAlerts(fetched);
     }, (err) => {
       console.error("Failed to fetch emergency alerts:", err);
