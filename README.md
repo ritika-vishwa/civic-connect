@@ -4,6 +4,17 @@
 
 ---
 
+## 🧪 Demo & Evaluation (For Reviewers)
+
+To fully explore the capabilities of CivicConnect—including the comprehensive AI analytics dashboard, emergency broadcasting, and system-wide settings—please log in using the pre-configured Administrator account:
+
+- **Email:** `ritikavishwakarma777@gmail.com`
+- **Password:** `civic777`
+
+*Tip: We highly encourage you to use this admin account to provision new test accounts with different roles (such as **Citizen**, **Municipal Official**, and **Community Moderator**) to see how the dashboards, permissions, and features dynamically adapt for each user type.*
+
+---
+
 ## ✨ Features
 
 ### 👤 Role-Based Access Control (RBAC)
